@@ -1,24 +1,45 @@
 const std = @import("std");
 
 pub fn main() !void {
-    // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const alloc = arena.allocator();
 
-    // stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
-
-    try stdout.print("Run `zig build test` to run the tests.\n", .{});
-
-    try bw.flush(); // don't forget to flush!
+    const stdin = std.io.getStdIn();
+    var buf = std.io.bufferedReader(stdin.reader());
+    var r = buf.reader();
+    var in_buf: [4096]u8 = undefined;
+    const bytes_read = try r.readAll(&in_buf);
+    const in = in_buf[0..bytes_read];
+    const bril_json = try std.json.parseFromSliceLeaky(Program, alloc, in, .{});
+    std.debug.print("{s}", .{bril_json});
 }
 
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // try commenting this out and see if zig detects the memory leak!
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
-}
+const Program = struct {
+    functions: []Function,
+};
+
+const Function = struct {
+    name: []const u8,
+    args: []const []const u8,
+    type: ?[]const u8,
+    instrs: []LabelOrInstruction,
+};
+
+const LabelOrInstruction = union(enum) {
+    Instruction: Instruction,
+    Label: Label,
+};
+
+const Label = struct {
+    label: []const u8,
+};
+
+const Instruction = struct {
+    op: []const u8,
+    dest: ?[]const u8,
+    type: ?[]const u8,
+    args: []const []const u8,
+    funcs: []const []const u8,
+    labels: []const []const u8,
+};
