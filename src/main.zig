@@ -8,13 +8,20 @@ pub fn main() !void {
     const alloc = arena.allocator();
 
     const stdin = std.io.getStdIn();
-    var buf = std.io.bufferedReader(stdin.reader());
-    var r = buf.reader();
+    var in_buf_rdr = std.io.bufferedReader(stdin.reader());
+    var r = in_buf_rdr.reader();
     var in_buf: [4096]u8 = undefined;
     const bytes_read = try r.readAll(&in_buf);
-    const in = in_buf[0..bytes_read];
-    const bril_json = try std.json.parseFromSliceLeaky(Program, alloc, in, .{});
-    std.debug.print("{}\n", .{bril_json});
+    const in_bytes = in_buf[0..bytes_read];
+    const in_json = try std.json.parseFromSliceLeaky(Program, alloc, in_bytes, .{});
+
+    const transformed_bril = in_json;
+
+    const stdout = std.io.getStdOut();
+    var out_buf_wtr = std.io.bufferedWriter(stdout.writer());
+    const w = out_buf_wtr.writer();
+    try std.json.stringify(transformed_bril, .{ .emit_null_optional_fields = false }, w);
+    try out_buf_wtr.flush();
 }
 
 const Program = struct {
