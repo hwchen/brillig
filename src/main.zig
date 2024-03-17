@@ -57,6 +57,12 @@ const Code = union(enum) {
             else => return error.UnexpectedToken,
         }
     }
+
+    pub fn jsonStringify(self: @This(), stream: anytype) !void {
+        switch (self) {
+            inline else => |value| try stream.write(value),
+        }
+    }
 };
 
 const Label = struct {
@@ -88,6 +94,12 @@ const Value = union(enum) {
             .bool => |b| return Value{ .bool = b },
             .integer => |i| return Value{ .int = i },
             else => return error.UnexpectedToken,
+        }
+    }
+
+    pub fn jsonStringify(self: @This(), stream: anytype) !void {
+        switch (self) {
+            inline else => |value| try stream.write(value),
         }
     }
 };
