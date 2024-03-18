@@ -1,13 +1,15 @@
 const std = @import("std");
-const json = @import("json.zig");
 const mem = std.mem;
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
+const HashMap = std.json.ArrayHashMap; // Needed to get json serialization
+
+const json = @import("json.zig");
 
 const Block = []json.Code;
-const Blocks = []Block;
+const BlockMap = HashMap(Block);
 
-pub fn basicBlocks(program: json.Program, alloc: Allocator) !Blocks {
+pub fn basicBlocks(program: json.Program, alloc: Allocator) !BlockMap {
     var blocks = ArrayList(Block).init(alloc);
     for (program.functions) |function| {
         var block = ArrayList(json.Code).init(alloc);
@@ -34,5 +36,24 @@ pub fn basicBlocks(program: json.Program, alloc: Allocator) !Blocks {
         }
         try blocks.append(try block.toOwnedSlice());
     }
-    return try blocks.toOwnedSlice();
+
+    var block_map = BlockMap {};
+    for (blocks.items, 0..) |block, i| {
+        const first_code = block[0]; // Block cannot be empty
+        switch (first_code) {
+            .Label => |l| try block_map.map.put(alloc, l.label, block[1..]), // TODO slice to OwnedSlice ok?
+            else => {
+                const l = try std.fmt.allocPrint(alloc, "b{d:0>3}", .{i});
+                try block_map.map.put(alloc, l, block);
+            },
+        }
+    }
+    return block_map;
+}
+
+pub const ControlFlowGraph = HashMap([]const []const u8);
+
+pub fn controlFlowGraph(block_map: BlockMap, alloc: Allocator) !ControlFlowGraph {
+    _ = block_map;
+    _ = alloc;
 }
