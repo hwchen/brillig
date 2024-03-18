@@ -2,6 +2,7 @@
 ///
 const std = @import("std");
 const json = @import("json.zig");
+const analysis = @import("analysis.zig");
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -16,7 +17,7 @@ pub fn main() !void {
     const in_bytes = in_buf[0..bytes_read];
     const in_json = try std.json.parseFromSliceLeaky(json.Program, alloc, in_bytes, .{});
 
-    const transformed_bril = in_json;
+    const transformed_bril = try analysis.basicBlocks(in_json, alloc);
 
     const stdout = std.io.getStdOut();
     var out_buf_wtr = std.io.bufferedWriter(stdout.writer());
