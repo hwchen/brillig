@@ -7,9 +7,10 @@ const HashMap = std.json.ArrayHashMap; // Needed to get json serialization
 const json = @import("json.zig");
 
 const Block = []json.Code;
+const BasicBlocks = []Block;
 const BlockMap = HashMap(Block);
 
-pub fn basicBlocks(program: json.Program, alloc: Allocator) !BlockMap {
+pub fn basicBlocks(program: json.Program, alloc: Allocator) !BasicBlocks {
     var blocks = ArrayList(Block).init(alloc);
     for (program.functions) |function| {
         var block = ArrayList(json.Code).init(alloc);
@@ -37,8 +38,12 @@ pub fn basicBlocks(program: json.Program, alloc: Allocator) !BlockMap {
         try blocks.append(try block.toOwnedSlice());
     }
 
+    return try blocks.toOwnedSlice();
+}
+
+pub fn blockMap(blocks: BasicBlocks, alloc: Allocator) !BlockMap {
     var block_map = BlockMap {};
-    for (blocks.items, 0..) |block, i| {
+    for (blocks, 0..) |block, i| {
         const first_code = block[0]; // Block cannot be empty
         switch (first_code) {
             .Label => |l| try block_map.map.put(alloc, l.label, block[1..]), // TODO slice to OwnedSlice ok?

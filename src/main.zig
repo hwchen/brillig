@@ -17,11 +17,12 @@ pub fn main() !void {
     const in_bytes = in_buf[0..bytes_read];
     const in_json = try std.json.parseFromSliceLeaky(json.Program, alloc, in_bytes, .{});
 
-    const transformed_bril = try analysis.basicBlocks(in_json, alloc);
+    const basic_blocks = try analysis.basicBlocks(in_json, alloc);
+    const block_map = try analysis.blockMap(basic_blocks, alloc);
 
     const stdout = std.io.getStdOut();
     var out_buf_wtr = std.io.bufferedWriter(stdout.writer());
     const w = out_buf_wtr.writer();
-    try std.json.stringify(transformed_bril, .{ .emit_null_optional_fields = false }, w);
+    try std.json.stringify(block_map, .{ .emit_null_optional_fields = false }, w);
     try out_buf_wtr.flush();
 }
