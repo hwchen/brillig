@@ -19,10 +19,11 @@ pub fn main() !void {
 
     const basic_blocks = try analysis.basicBlocks(in_json, alloc);
     const block_map = try analysis.blockMap(basic_blocks, alloc);
+    const cfg = try analysis.controlFlowGraph(block_map, alloc);
 
     const stdout = std.io.getStdOut();
     var out_buf_wtr = std.io.bufferedWriter(stdout.writer());
     const w = out_buf_wtr.writer();
-    try std.json.stringify(block_map, .{ .emit_null_optional_fields = false }, w);
+    try std.json.stringify(cfg, .{ .emit_null_optional_fields = false }, w);
     try out_buf_wtr.flush();
 }

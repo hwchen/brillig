@@ -59,6 +59,25 @@ pub fn blockMap(blocks: BasicBlocks, alloc: Allocator) !BlockMap {
 pub const ControlFlowGraph = HashMap([]const []const u8);
 
 pub fn controlFlowGraph(block_map: BlockMap, alloc: Allocator) !ControlFlowGraph {
-    _ = block_map;
-    _ = alloc;
+    var cfg = ControlFlowGraph {};
+    const labels = block_map.map.keys();
+    const blocks = block_map.map.values();
+    for (0..block_map.map.count()) |i| {
+        const label = labels[i];
+        const block = blocks[i];
+        const last_instr = block[block.len - 1];
+        const succ = switch (last_instr) {
+            .Label => unreachable,
+            .Instruction => |instr| instr.labels orelse blk: {
+                var out = ArrayList([]const u8).init(alloc);
+                if (i <= block.len) {
+                    try out.append(try std.fmt.allocPrint(alloc, "{s}", .{labels[i+1]}));
+                }
+                break :blk try out.toOwnedSlice();
+            },
+        };
+
+        try cfg.map.put(alloc, label, succ);
+    }
+    return cfg;
 }
