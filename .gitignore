@@ -1,5 +1,8 @@
 .envrc
 .direnv
 .venv
+
+
 zig-cache
 zig-out
+*.pdf

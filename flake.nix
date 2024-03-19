@@ -55,6 +55,8 @@
         # Just using venv, install everything by pip for python.
         # https://www.reddit.com/r/NixOS/comments/q71v0e/what_is_the_correct_way_to_setup_pip_with_nix_to/
         pkgs.python311Packages.venvShellHook
+
+        pkgs.graphviz
         ];
         # for brili executable
         PATH = "/home/hwchen/.deno/bin:$PATH";

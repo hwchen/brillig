@@ -10,6 +10,7 @@ const Block = []json.Code;
 const BasicBlocks = []Block;
 const BlockMap = HashMap(Block);
 
+// TODO handle funcs. (probably need a map of fn -> fnblocks)
 pub fn basicBlocks(program: json.Program, alloc: Allocator) !BasicBlocks {
     var blocks = ArrayList(Block).init(alloc);
     for (program.functions) |function| {

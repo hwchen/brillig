@@ -24,6 +24,25 @@ pub fn main() !void {
     const stdout = std.io.getStdOut();
     var out_buf_wtr = std.io.bufferedWriter(stdout.writer());
     const w = out_buf_wtr.writer();
-    try std.json.stringify(cfg, .{ .emit_null_optional_fields = false }, w);
+    //try std.json.stringify(cfg, .{ .emit_null_optional_fields = false }, w);
+    try writeGraphviz(cfg, w);
     try out_buf_wtr.flush();
+}
+
+// w: Writer
+fn writeGraphviz(cfg: analysis.ControlFlowGraph, w: anytype) !void {
+    try w.print("digraph cfg {{\n", .{});
+    for (cfg.map.keys()) |label| {
+        try w.print("  {s};\n", .{label});
+    }
+
+    var it = cfg.map.iterator();
+    while (it.next()) |kv| {
+        const label = kv.key_ptr.*;
+        const succs = kv.value_ptr.*;
+        for (succs) |succ| {
+            try w.print("  {s} -> {s};\n", .{ label, succ });
+        }
+    }
+    try w.print("}}\n", .{});
 }
