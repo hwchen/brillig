@@ -3,7 +3,7 @@
 const std = @import("std");
 const clap = @import("clap");
 
-const json = @import("json.zig");
+const bril = @import("bril.zig");
 const analysis = @import("analysis.zig");
 
 pub fn main() !void {
@@ -40,7 +40,7 @@ pub fn main() !void {
     var in_buf: [4096]u8 = undefined;
     const bytes_read = try r.readAll(&in_buf);
     const in_bytes = in_buf[0..bytes_read];
-    const in_json = try std.json.parseFromSliceLeaky(json.Program, alloc, in_bytes, .{});
+    const in_json = try std.json.parseFromSliceLeaky(bril.Program, alloc, in_bytes, .{});
 
     const stdout = std.io.getStdOut();
     const bwtr = std.io.bufferedWriter(stdout.writer());

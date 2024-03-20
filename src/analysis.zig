@@ -4,22 +4,22 @@ const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 const HashMap = std.json.ArrayHashMap; // Needed to get json serialization
 
-const json = @import("json.zig");
+const bril = @import("bril.zig");
 
-const Block = []json.Code;
+const Block = []bril.Code;
 const BasicBlocks = []Block;
 const BlockMap = HashMap(Block);
 
 // TODO handle funcs. (probably need a map of fn -> fnblocks)
-pub fn basicBlocks(program: json.Program, alloc: Allocator) !BasicBlocks {
+pub fn basicBlocks(program: bril.Program, alloc: Allocator) !BasicBlocks {
     var blocks = ArrayList(Block).init(alloc);
     for (program.functions) |function| {
-        var block = ArrayList(json.Code).init(alloc);
+        var block = ArrayList(bril.Code).init(alloc);
         for (function.instrs) |code| {
             switch (code) {
                 .Label => |_| {
                     try blocks.append(try block.toOwnedSlice());
-                    block = ArrayList(json.Code).init(alloc);
+                    block = ArrayList(bril.Code).init(alloc);
                     try block.append(code);
                 },
                 .Instruction => |instr| {
@@ -31,7 +31,7 @@ pub fn basicBlocks(program: json.Program, alloc: Allocator) !BasicBlocks {
                     // zig fmt:on
                     if (is_terminal) {
                         try blocks.append(try block.toOwnedSlice());
-                        block = ArrayList(json.Code).init(alloc);
+                        block = ArrayList(bril.Code).init(alloc);
                     }
                 },
             }
