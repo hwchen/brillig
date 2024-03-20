@@ -57,6 +57,7 @@
         pkgs.python311Packages.venvShellHook
 
         pkgs.graphviz
+        pkgs.python311Packages.turnt # for testing
         ];
         # for brili executable
         PATH = "/home/hwchen/.deno/bin:$PATH";

@@ -4,5 +4,5 @@
 run-with bril-file *args="":
     cat {{bril-file}} | bril2json | just run {{args}}
 
-test:
-    zig test
+test *args="":
+    zig build && turnt {{args}} test/**/*.bril
