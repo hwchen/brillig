@@ -1,0 +1,16 @@
+@main() {
+    v: int = const 2;
+    call @print4;
+    call @print2;
+    print v;
+}
+@print2 {
+    v: int = const 2;
+    print v;
+    ret;
+}
+@print4 {
+    v: int = const 4;
+    print v;
+    ret;
+}
