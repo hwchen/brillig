@@ -14,10 +14,9 @@ pub fn main() !void {
     // Start set up CLI
     const params = comptime clap.parseParamsComptime(
         \\-h, --help           Display this help and exit.
-        \\--input              Display input bril.
-        \\--analyzed           Display final analyzed result.
-        \\--block-map          Display mapping of label to block.
+        \\--blocks              Display basic blocks, block map.
         \\--control-flow-graph Display control flow graph.
+        \\--analyzed           Display final analyzed result.
         \\--graphviz           Write graphviz file to stdout.
     );
 
@@ -33,8 +32,8 @@ pub fn main() !void {
     if (opts.args.help != 0) {
         return clap.help(std.io.getStdErr().writer(), clap.Help, &params, .{});
     }
-    // End set up CLI
 
+    // io setup
     const stdin = std.io.getStdIn();
     var in_buf_rdr = std.io.bufferedReader(stdin.reader());
     var r = in_buf_rdr.reader();
@@ -43,41 +42,27 @@ pub fn main() !void {
     const in_bytes = in_buf[0..bytes_read];
     const in_json = try std.json.parseFromSliceLeaky(json.Program, alloc, in_bytes, .{});
 
-    const basic_blocks = try analysis.basicBlocks(in_json, alloc);
-    const block_map = try analysis.blockMap(basic_blocks, alloc);
-    const cfg = try analysis.controlFlowGraph(block_map, alloc);
-
     const stdout = std.io.getStdOut();
-    var out_buf_wtr = std.io.bufferedWriter(stdout.writer());
-    const w = out_buf_wtr.writer();
+    const bwtr = std.io.bufferedWriter(stdout.writer());
 
-    if (opts.args.input != 0) {
-        try std.json.stringify(in_json, .{ .emit_null_optional_fields = false }, w);
-        _ = try w.write("\n");
-    }
-    if (opts.args.analyzed != 0) {
-        // currently in_json, but should be changed to output of final analyzed result
-        try std.json.stringify(in_json, .{ .emit_null_optional_fields = false }, w);
-        _ = try w.write("\n");
-    }
-    if (opts.args.@"block-map" != 0) {
-        try std.json.stringify(block_map, .{ .emit_null_optional_fields = false }, w);
-        _ = try w.write("\n");
-    }
-    if (opts.args.@"control-flow-graph" != 0) {
-        try std.json.stringify(cfg, .{ .emit_null_optional_fields = false }, w);
-        _ = try w.write("\n");
-    }
-    if (opts.args.graphviz != 0) {
-        try writeGraphviz(cfg, w);
-        _ = try w.write("\n");
-    }
+    // blocks
+    // output written immediately to be able to show at least some output in case of crash
+    const basic_blocks = try analysis.basicBlocks(in_json, alloc);
+    if (opts.args.blocks != 0) try writeJson(basic_blocks, bwtr);
+    const block_map = try analysis.blockMap(basic_blocks, alloc);
+    if (opts.args.blocks != 0) try writeJson(block_map, bwtr);
 
-    try out_buf_wtr.flush();
+    // cfg
+    const cfg = try analysis.controlFlowGraph(block_map, alloc);
+    if (opts.args.@"control-flow-graph" != 0) try writeJson(cfg, bwtr);
+    if (opts.args.graphviz != 0) try writeGraphviz(cfg, bwtr);
 }
 
-// w: Writer
-fn writeGraphviz(cfg: analysis.ControlFlowGraph, w: anytype) !void {
+// bw: buffered writer
+// flushes immediately
+fn writeGraphviz(cfg: analysis.ControlFlowGraph, bwtr: anytype) !void {
+    var bw = bwtr;
+    const w = bw.writer();
     try w.print("digraph cfg {{\n", .{});
     for (cfg.map.keys()) |label| {
         try w.print("  {s};\n", .{label});
@@ -91,5 +76,16 @@ fn writeGraphviz(cfg: analysis.ControlFlowGraph, w: anytype) !void {
             try w.print("  {s} -> {s};\n", .{ label, succ });
         }
     }
-    try w.print("}}", .{});
+    try w.print("}}\n", .{});
+    try bw.flush();
+}
+
+// bwtr: buffered writer
+// flushes immediately
+fn writeJson(v: anytype, bwtr: anytype) !void {
+    var bw = bwtr;
+    const w = bw.writer();
+    try std.json.stringify(v, .{ .emit_null_optional_fields = false }, w);
+    _ = try w.write("\n");
+    try bw.flush();
 }
