@@ -51,9 +51,9 @@ pub fn main() !void {
     if (opts.args.blocks != 0) try writeJson(basic_blocks, bwtr);
 
     // cfg
-    //const cfg = try analysis.controlFlowGraph(basic_blocks, alloc);
-    //if (opts.args.@"control-flow-graph" != 0) try writeJson(cfg, bwtr);
-    //if (opts.args.graphviz != 0) try writeGraphviz(cfg, bwtr);
+    const cfg = try analysis.controlFlowGraph(basic_blocks, alloc);
+    if (opts.args.@"control-flow-graph" != 0) try writeJson(cfg, bwtr);
+    if (opts.args.graphviz != 0) try writeGraphviz(cfg, bwtr);
 }
 
 // bw: buffered writer

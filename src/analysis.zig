@@ -46,8 +46,8 @@ pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !BasicBlocks {
                         try blocks.append(try block.toOwnedSlice());
                         block = ArrayList(bril.Instruction).init(alloc);
                     }
-                    try blk_to_lbl.map.put(alloc, blocks.items.len - 1, lbl.label);
-                    try lbl_to_blk.map.put(alloc, lbl.label, blocks.items.len - 1);
+                    try blk_to_lbl.map.put(alloc, blocks.items.len, lbl.label);
+                    try lbl_to_blk.map.put(alloc, lbl.label, blocks.items.len);
                 },
                 .Instruction => |instr| {
                     // Don't need to generate label for block, it's just the index in blocks
@@ -66,29 +66,43 @@ pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !BasicBlocks {
     return .{ .blocks = try blocks.toOwnedSlice(), .blk_to_lbl = blk_to_lbl, .lbl_to_blk = lbl_to_blk, .fn_to_blk = fn_to_blk };
 }
 
-//pub const ControlFlowGraph = StringMap([]const []const u8);
-//
-//pub fn controlFlowGraph(basic_blocks: BasicBlocks, alloc: Allocator) !ControlFlowGraph {
-//    var cfg = ControlFlowGraph{};
-//    const blk_labels = block_map.map.keys();
-//    const blks = block_map.map.values();
-//    for (0..block_map.map.count()) |blk_idx| {
-//        const blk_label = blk_labels[blk_idx];
-//        const blk = blks[blk_idx];
-//        var succs = ArrayList([]const u8).init(alloc);
-//        for (blk, 0..) |code, code_idx| {
-//            switch (code) {
-//                .Label => unreachable,
-//                // Note that we can assume that instr.labels only exists on control ops w/ labels (jmp, br)
-//                .Instruction => |instr| if (instr.op == .ret) continue else if (instr.labels) |instr_labels| {
-//                    try succs.appendSlice(instr_labels);
-//                } else if (code_idx >= blk.len - 1 and blk_idx <= blks.len) {
-//                    // last instruction in block, and is not the last block
-//                    try succs.append(try std.fmt.allocPrint(alloc, "{s}", .{blk_labels[blk_idx + 1]}));
-//                },
-//            }
-//        }
-//        try cfg.map.put(alloc, blk_label, try succs.toOwnedSlice());
-//    }
-//    return cfg;
-//}
+pub const ControlFlowGraph = StringMap([]const []const u8);
+
+pub fn controlFlowGraph(bb: BasicBlocks, alloc: Allocator) !ControlFlowGraph {
+    var cfg = ControlFlowGraph{};
+    const blks = bb.blocks;
+    for (blks, 0..) |blk, blk_idx| {
+        const blk_label = bb.blk_to_lbl.map.get(blk_idx) orelse try printLabel(alloc, blk_idx);
+        var succs = StringMap(void){};
+        for (blk, 0..) |instr, instr_idx| {
+            switch (instr.op) {
+                .ret => continue,
+                .br, .jmp => {
+                    for (instr.labels.?) |lbl| {
+                        try succs.map.put(alloc, lbl, {});
+                    }
+                },
+                .call => {
+                    // Assume just one function called at a time?
+                    const called_blk_idx = bb.fn_to_blk.map.get(instr.funcs.?[0]).?;
+                    const lbl = bb.blk_to_lbl.map.get(called_blk_idx) orelse try printLabel(alloc, called_blk_idx);
+                    try succs.map.put(alloc, lbl, {});
+                },
+                else => if (instr_idx >= blk.len - 1 and blk_idx < blks.len - 1) {
+                    // last instruction in block, and is not the last block
+                    const lbl = bb.blk_to_lbl.map.get(blk_idx + 1) orelse try printLabel(alloc, blk_idx + 1);
+                    try succs.map.put(alloc, lbl, {});
+                },
+            }
+        }
+        try cfg.map.put(alloc, blk_label, succs.map.keys());
+    }
+    return cfg;
+}
+
+// given block index, print label
+// Factored out in case I want to change label formatting easily.
+// Don't forget that IntStringMap has a separate formatting for the label.
+fn printLabel(alloc: Allocator, idx: usize) ![]const u8 {
+    return try std.fmt.allocPrint(alloc, "{d}", .{idx});
+}
