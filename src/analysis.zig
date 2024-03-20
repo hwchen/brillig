@@ -14,25 +14,27 @@ const BasicBlocks = struct {
     lbl_to_blk: StringMap(usize),
     fn_to_blk: StringMap(usize),
 };
+
 // thin wrapper, to make it serializable to json
 const IntStringMap = struct {
     map: std.AutoHashMapUnmanaged(usize, []const u8) = std.AutoHashMapUnmanaged(usize, []const u8){},
-    alloc: Allocator, // TODO a bit messy to have a managed hashmap but also carry an alloc
 
-    pub fn jsonStringify(self: @This(), stream: anytype) !void {
-        var value = StringMap([]const u8){};
+    pub fn jsonStringify(self: @This(), jws: anytype) !void {
+        var buf: [32]u8 = undefined; //32 chars should be plenty for numeric label?
+        try jws.beginObject();
         var it = self.map.iterator();
-        while (it.next()) |entry| {
-            const k = std.fmt.allocPrint(self.alloc, "{d}", .{entry.key_ptr.*}) catch return;
-            value.map.put(self.alloc, k, entry.value_ptr.*) catch return;
+        while (it.next()) |kv| {
+            const k = try std.fmt.bufPrint(&buf, "{d}", .{kv.key_ptr.*});
+            try jws.objectField(k);
+            try jws.write(kv.value_ptr.*);
         }
-        try stream.write(value);
+        try jws.endObject();
     }
 };
 
 pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !BasicBlocks {
     var blocks = ArrayList(Block).init(alloc);
-    var blk_to_lbl = IntStringMap{ .alloc = alloc };
+    var blk_to_lbl = IntStringMap{};
     var lbl_to_blk = StringMap(usize){};
     var fn_to_blk = StringMap(usize){};
     for (program.functions) |function| {
