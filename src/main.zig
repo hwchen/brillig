@@ -47,15 +47,13 @@ pub fn main() !void {
 
     // blocks
     // output written immediately to be able to show at least some output in case of crash
-    const basic_blocks = try analysis.basicBlocks(in_json, alloc);
+    const basic_blocks = try analysis.genBasicBlocks(in_json, alloc);
     if (opts.args.blocks != 0) try writeJson(basic_blocks, bwtr);
-    const block_map = try analysis.blockMap(basic_blocks, alloc);
-    if (opts.args.blocks != 0) try writeJson(block_map, bwtr);
 
     // cfg
-    const cfg = try analysis.controlFlowGraph(block_map, alloc);
-    if (opts.args.@"control-flow-graph" != 0) try writeJson(cfg, bwtr);
-    if (opts.args.graphviz != 0) try writeGraphviz(cfg, bwtr);
+    //const cfg = try analysis.controlFlowGraph(basic_blocks, alloc);
+    //if (opts.args.@"control-flow-graph" != 0) try writeJson(cfg, bwtr);
+    //if (opts.args.graphviz != 0) try writeGraphviz(cfg, bwtr);
 }
 
 // bw: buffered writer
