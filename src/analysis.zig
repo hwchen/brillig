@@ -67,7 +67,8 @@ pub fn controlFlowGraph(block_map: BlockMap, alloc: Allocator) !ControlFlowGraph
         const last_instr = block[block.len - 1];
         const succ = switch (last_instr) {
             .Label => unreachable,
-            .Instruction => |instr| instr.labels orelse blk: {
+            // Note that we can assume that instr.labels only exists on control ops w/ labels (jmp, br)
+            .Instruction => |instr| if (instr.op == .ret) continue else instr.labels orelse blk: {
                 var out = ArrayList([]const u8).init(alloc);
                 if (i <= block.len) {
                     try out.append(try std.fmt.allocPrint(alloc, "{s}", .{labels[i + 1]}));
