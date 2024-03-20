@@ -24,12 +24,7 @@ pub fn basicBlocks(program: bril.Program, alloc: Allocator) !BasicBlocks {
                 },
                 .Instruction => |instr| {
                     try block.append(code);
-                    // zig fmt: off
-                    const is_terminal = mem.eql(u8, instr.op, "jmp")
-                        or mem.eql(u8, instr.op, "br")
-                        or mem.eql(u8, instr.op, "ret");
-                    // zig fmt:on
-                    if (is_terminal) {
+                    if (instr.op.isTerminal()) {
                         try blocks.append(try block.toOwnedSlice());
                         block = ArrayList(bril.Code).init(alloc);
                     }
@@ -46,7 +41,7 @@ pub fn basicBlocks(program: bril.Program, alloc: Allocator) !BasicBlocks {
 }
 
 pub fn blockMap(blocks: BasicBlocks, alloc: Allocator) !BlockMap {
-    var block_map = BlockMap {};
+    var block_map = BlockMap{};
     for (blocks, 0..) |block, i| {
         const first_code = block[0]; // Block cannot be empty
         switch (first_code) {
@@ -63,7 +58,7 @@ pub fn blockMap(blocks: BasicBlocks, alloc: Allocator) !BlockMap {
 pub const ControlFlowGraph = HashMap([]const []const u8);
 
 pub fn controlFlowGraph(block_map: BlockMap, alloc: Allocator) !ControlFlowGraph {
-    var cfg = ControlFlowGraph {};
+    var cfg = ControlFlowGraph{};
     const labels = block_map.map.keys();
     const blocks = block_map.map.values();
     for (0..block_map.map.count()) |i| {
@@ -75,7 +70,7 @@ pub fn controlFlowGraph(block_map: BlockMap, alloc: Allocator) !ControlFlowGraph
             .Instruction => |instr| instr.labels orelse blk: {
                 var out = ArrayList([]const u8).init(alloc);
                 if (i <= block.len) {
-                    try out.append(try std.fmt.allocPrint(alloc, "{s}", .{labels[i+1]}));
+                    try out.append(try std.fmt.allocPrint(alloc, "{s}", .{labels[i + 1]}));
                 }
                 break :blk try out.toOwnedSlice();
             },

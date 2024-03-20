@@ -46,7 +46,7 @@ pub const Label = struct {
 };
 
 pub const Instruction = struct {
-    op: []const u8,
+    op: Op,
     dest: ?[]const u8 = null,
     type: ?[]const u8 = null,
     args: ?[]const []const u8 = null,
@@ -77,5 +77,22 @@ pub const Value = union(enum) {
         switch (self) {
             inline else => |value| try stream.write(value),
         }
+    }
+};
+
+pub const Op = enum {
+    // zig fmt: off
+    add, mul, sub, div,
+    eq, lt, gt, le, ge,
+    not, @"and", @"or",
+    jmp, br, call, ret,
+    @"const", print,
+    // zig fmt: on
+
+    pub fn isTerminal(self: Op) bool {
+        return switch (self) {
+            .jmp, .br, .ret => true,
+            else => false,
+        };
     }
 };
