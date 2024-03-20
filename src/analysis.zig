@@ -64,7 +64,6 @@ pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !BasicBlocks {
         // Don't append again if the last instruction was a terminal, which already appends block
         if (block.items.len != 0) try blocks.append(try block.toOwnedSlice());
     }
-
     return .{ .blocks = try blocks.toOwnedSlice(), .blk_to_lbl = blk_to_lbl, .lbl_to_blk = lbl_to_blk, .fn_to_blk = fn_to_blk };
 }
 
@@ -74,7 +73,7 @@ pub fn controlFlowGraph(bb: BasicBlocks, alloc: Allocator) !ControlFlowGraph {
     var cfg = ControlFlowGraph{};
     const blks = bb.blocks;
     for (blks, 0..) |blk, blk_idx| {
-        const blk_label = bb.blk_to_lbl.map.get(blk_idx) orelse try printLabel(alloc, blk_idx);
+        const blk_lbl = bb.blk_to_lbl.map.get(blk_idx) orelse try printLabel(alloc, blk_idx);
         var succs = StringMap(void){};
         for (blk, 0..) |instr, instr_idx| {
             switch (instr.op) {
@@ -97,7 +96,7 @@ pub fn controlFlowGraph(bb: BasicBlocks, alloc: Allocator) !ControlFlowGraph {
                 },
             }
         }
-        try cfg.map.put(alloc, blk_label, succs.map.keys());
+        try cfg.map.put(alloc, blk_lbl, succs.map.keys());
     }
     return cfg;
 }
