@@ -83,7 +83,7 @@ fn writeGraphviz(cfg: analysis.ControlFlowGraph, bwtr: anytype) !void {
 // bwtr: buffered writer
 // flushes immediately
 fn writeJson(v: anytype, bwtr: anytype) !void {
-    var bw = bwtr;
+    var bw = bwtr; // TODO is there a way to avoid this reassignment? Should I pass by pointer?
     const w = bw.writer();
     try std.json.stringify(v, .{ .emit_null_optional_fields = false }, w);
     _ = try w.write("\n");
