@@ -36,7 +36,10 @@ pub fn basicBlocks(program: json.Program, alloc: Allocator) !BasicBlocks {
                 },
             }
         }
-        try blocks.append(try block.toOwnedSlice());
+        // Don't append again if the last instruction was a terminal, which already appends block
+        if (block.items.len != 0) {
+            try blocks.append(try block.toOwnedSlice());
+        }
     }
 
     return try blocks.toOwnedSlice();
