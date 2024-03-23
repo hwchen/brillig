@@ -40,7 +40,14 @@ pub fn main() !void {
     var in_buf: [4096]u8 = undefined;
     const bytes_read = try r.readAll(&in_buf);
     const in_bytes = in_buf[0..bytes_read];
-    const in_json = try std.json.parseFromSliceLeaky(bril.Program, alloc, in_bytes, .{});
+
+    var jdiag = std.json.Diagnostics{};
+    var jscanner = std.json.Scanner.initCompleteInput(alloc, in_bytes);
+    jscanner.enableDiagnostics(&jdiag);
+    const in_json = std.json.parseFromTokenSourceLeaky(bril.Program, alloc, &jscanner, .{}) catch |err| {
+        std.debug.print("Error parsing json: {} at line {d} col {d}\n", .{ err, jdiag.getLine(), jdiag.getColumn() });
+        return;
+    };
 
     const stdout = std.io.getStdOut();
     const bwtr = std.io.bufferedWriter(stdout.writer());
