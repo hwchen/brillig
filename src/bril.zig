@@ -6,9 +6,14 @@ pub const Program = struct {
 
 pub const Function = struct {
     name: []const u8,
-    args: ?[]const []const u8 = null,
-    type: ?[]const u8 = null,
+    args: ?[]const FunctionArg = null,
+    type: ?Type = null,
     instrs: []Code,
+};
+
+pub const FunctionArg = struct {
+    name: []const u8,
+    type: Type,
 };
 
 pub const Code = union(enum) {
@@ -48,7 +53,7 @@ pub const Label = struct {
 pub const Instruction = struct {
     op: Op,
     dest: ?[]const u8 = null,
-    type: ?[]const u8 = null,
+    type: ?Type = null,
     args: ?[]const []const u8 = null,
     funcs: ?[]const []const u8 = null,
     labels: ?[]const []const u8 = null,
@@ -95,4 +100,9 @@ pub const Op = enum {
             else => false,
         };
     }
+};
+
+pub const Type = enum {
+    int,
+    bool,
 };
