@@ -43,8 +43,11 @@ pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !BasicBlocks {
             if (code_idx == 0) try fn_to_blk.map.put(alloc, function.name, blocks.items.len);
             switch (code) {
                 .Label => |lbl| {
-                    // if label is at the first instruction, don't append the empty block
-                    if (code_idx != 0) {
+                    // if label comes after the first instruction, and if previous block ended in non-terminal
+                    // append the block before starting a new one.
+                    // If it's the first instruction, or block before label ended in a terminal, the previous
+                    // block will be empty.
+                    if (code_idx != 0 and block.items.len != 0) {
                         try blocks.append(try block.toOwnedSlice());
                         block = ArrayList(bril.Instruction).init(alloc);
                     }
