@@ -7,6 +7,10 @@ const StringMap = std.json.ArrayHashMap; // Needed to get json serialization
 const bril = @import("bril.zig");
 
 const Block = []bril.Instruction;
+// A control flow graph for the full program.
+// However, it looks like usually there's separate graphs for CFG and inter-procedural CFG.
+// I'll just keep it as-is for the moment until it needs to be refactored. In the meantime,
+// analysis on cfg within the block can be performed by just ignoring `call`.
 const BasicBlocks = struct {
     blocks: []Block,
     // if there's no label, then the implied label is the index in blocks
