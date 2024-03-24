@@ -1,0 +1,20 @@
+@main() {
+    v: int = const 2;
+    call @fn1;
+    call @fn2;
+    print v;
+}
+@fn1 {
+    v: int = const 2;
+    jmp .testlabel;
+.testlabel:
+    print v;
+    ret;
+}
+@fn2 {
+    v: int = const 4;
+    jmp .testlabel;
+.testlabel:
+    print v;
+    ret;
+}
