@@ -43,10 +43,10 @@ const BasicBlocks = struct {
         var instrs = ArrayList(bril.Code).init(alloc);
         for (bb.blocks, 0..) |block, blk_idx| {
             if (bb.blk_to_lbl.map.get(blk_idx)) |label| {
-                try instrs.append(.{ .Label = .{ .label = label } });
+                try instrs.append(.{ .label = .{ .label = label } });
             }
             for (block) |instr| {
-                try instrs.append(.{ .Instruction = instr });
+                try instrs.append(.{ .instruction = instr });
             }
         }
         return bril.Function{ .name = bb.name, .args = bb.args, .type = bb.type, .instrs = try instrs.toOwnedSlice() };
@@ -74,7 +74,7 @@ pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !ProgramBasicBloc
         var block = ArrayList(bril.Instruction).init(alloc);
         for (func.instrs, 0..) |code, code_idx| {
             switch (code) {
-                .Label => |lbl| {
+                .label => |lbl| {
                     // if label comes after the first instruction, and if previous block ended in non-terminal
                     // append the block before starting a new one.
                     // If it's the first instruction, or block before label ended in a terminal, the previous
@@ -86,7 +86,7 @@ pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !ProgramBasicBloc
                     try blk_to_lbl.map.put(alloc, blocks.items.len, lbl.label);
                     try lbl_to_blk.map.put(alloc, lbl.label, blocks.items.len);
                 },
-                .Instruction => |instr| {
+                .instruction => |instr| {
                     // Don't need to generate label for block, it's just the index in blocks
                     try block.append(instr);
                     if (instr.op.isTerminal()) {

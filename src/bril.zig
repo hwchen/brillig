@@ -17,8 +17,8 @@ pub const FunctionArg = struct {
 };
 
 pub const Code = union(enum) {
-    Instruction: Instruction,
-    Label: Label,
+    instruction: Instruction,
+    label: Label,
 
     pub fn jsonParse(allocator: std.mem.Allocator, source: anytype, options: std.json.ParseOptions) !@This() {
         return try jsonParseFromValue(allocator, try std.json.innerParse(std.json.Value, allocator, source, options), options);
@@ -29,10 +29,10 @@ pub const Code = union(enum) {
             .object => |object| {
                 if (object.contains("label")) {
                     const label = try std.json.innerParseFromValue(Label, allocator, source, options);
-                    return Code{ .Label = label };
+                    return Code{ .label = label };
                 } else {
                     const instr = try std.json.innerParseFromValue(Instruction, allocator, source, options);
-                    return Code{ .Instruction = instr };
+                    return Code{ .instruction = instr };
                 }
             },
             else => return error.UnexpectedToken,
