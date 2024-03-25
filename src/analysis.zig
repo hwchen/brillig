@@ -12,33 +12,33 @@ const BasicBlocks = struct {
     // if there's no label, then the implied label is the index in blocks
     blk_to_lbl: IntStringMap,
     lbl_to_blk: StringMap(usize),
+
+    // thin wrapper, to make it serializable to json
+    const IntStringMap = struct {
+        map: std.AutoHashMapUnmanaged(usize, []const u8) = std.AutoHashMapUnmanaged(usize, []const u8){},
+
+        pub fn jsonStringify(self: @This(), jws: anytype) !void {
+            var buf: [32]u8 = undefined; //32 chars should be plenty for numeric label?
+            try jws.beginObject();
+            var it = self.map.iterator();
+            while (it.next()) |kv| {
+                const k = try std.fmt.bufPrint(&buf, "{d}", .{kv.key_ptr.*});
+                try jws.objectField(k);
+                try jws.write(kv.value_ptr.*);
+            }
+            try jws.endObject();
+        }
+    };
 };
 const ProgramBasicBlocks = struct {
     functions: StringMap(BasicBlocks),
-};
-
-// thin wrapper, to make it serializable to json
-const IntStringMap = struct {
-    map: std.AutoHashMapUnmanaged(usize, []const u8) = std.AutoHashMapUnmanaged(usize, []const u8){},
-
-    pub fn jsonStringify(self: @This(), jws: anytype) !void {
-        var buf: [32]u8 = undefined; //32 chars should be plenty for numeric label?
-        try jws.beginObject();
-        var it = self.map.iterator();
-        while (it.next()) |kv| {
-            const k = try std.fmt.bufPrint(&buf, "{d}", .{kv.key_ptr.*});
-            try jws.objectField(k);
-            try jws.write(kv.value_ptr.*);
-        }
-        try jws.endObject();
-    }
 };
 
 pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !ProgramBasicBlocks {
     var fbb = StringMap(BasicBlocks){};
     for (program.functions) |func| {
         var blocks = ArrayList(Block).init(alloc);
-        var blk_to_lbl = IntStringMap{};
+        var blk_to_lbl = BasicBlocks.IntStringMap{};
         var lbl_to_blk = StringMap(usize){};
         var block = ArrayList(bril.Instruction).init(alloc);
         for (func.instrs, 0..) |code, code_idx| {
