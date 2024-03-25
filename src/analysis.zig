@@ -6,6 +6,9 @@ const StringMap = std.json.ArrayHashMap; // Needed to get json serialization
 
 const bril = @import("bril.zig");
 
+// To make sure that block index labels are always formatted the same.
+const BLOCK_INDEX_LABEL_FORMAT = "{d}";
+
 const Block = []bril.Instruction;
 const BasicBlocks = struct {
     blocks: []Block,
@@ -22,7 +25,7 @@ const BasicBlocks = struct {
             try jws.beginObject();
             var it = self.map.iterator();
             while (it.next()) |kv| {
-                const k = try std.fmt.bufPrint(&buf, "{d}", .{kv.key_ptr.*});
+                const k = try std.fmt.bufPrint(&buf, BLOCK_INDEX_LABEL_FORMAT, .{kv.key_ptr.*});
                 try jws.objectField(k);
                 try jws.write(kv.value_ptr.*);
             }
@@ -108,5 +111,5 @@ pub fn controlFlowGraph(pbb: ProgramBasicBlocks, alloc: Allocator) !ProgramContr
 // Factored out in case I want to change label formatting easily.
 // Don't forget that IntStringMap has a separate formatting for the label.
 fn printLabel(alloc: Allocator, idx: usize) ![]const u8 {
-    return try std.fmt.allocPrint(alloc, "{d}", .{idx});
+    return try std.fmt.allocPrint(alloc, BLOCK_INDEX_LABEL_FORMAT, .{idx});
 }
