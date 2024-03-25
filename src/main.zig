@@ -71,12 +71,12 @@ fn writeGraphviz(pcfg: analysis.ProgramControlFlowGraph, bwtr: anytype) !void {
     try w.print("digraph cfg {{\n", .{});
     for (pcfg.map.keys(), pcfg.map.values()) |fn_name, cfg| {
         for (cfg.map.keys()) |label| {
-            try w.print("  {s}::{s};\n", .{ fn_name, label });
+            try w.print("  \"{s}::{s}\";\n", .{ fn_name, label });
         }
 
         for (cfg.map.keys(), cfg.map.values()) |label, succs| {
             for (succs) |succ| {
-                try w.print("  {s}::{s} -> {s}::{s};\n", .{ fn_name, label, fn_name, succ });
+                try w.print("  \"{s}::{s}\" -> \"{s}::{s}\";\n", .{ fn_name, label, fn_name, succ });
             }
         }
     }

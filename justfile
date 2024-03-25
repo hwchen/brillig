@@ -6,3 +6,6 @@ run-with bril-file *args="":
 
 test *args="":
     zig build && turnt {{args}} test/**/*.bril
+
+graphviz bril-file:
+    just run-with {{bril-file}} --graphviz | dot -Tpdf -o scratch/cfg.pdf && evince scratch/cfg.pdf
