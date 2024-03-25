@@ -92,16 +92,14 @@ pub fn controlFlowGraph(pbb: ProgramBasicBlocks, alloc: Allocator) !ProgramContr
             const succs = switch (last_instr.op) {
                 .jmp, .br => last_instr.labels.?,
                 .ret => @as([]const []const u8, &.{}),
-                else => blk: {
-                    var out = ArrayList([]const u8).init(alloc);
-                    if (blk_idx < blks.len - 1) {
-                        // is not the last block
-                        const lbl = bb.blk_to_lbl.map.get(blk_idx + 1) orelse
-                            try fmt.allocPrint(alloc, BLOCK_INDEX_LABEL_FORMAT, .{blk_idx + 1});
-                        try out.append(lbl);
-                    }
-                    break :blk try out.toOwnedSlice();
-                },
+                else => if (blk_idx < blks.len - 1) blk: {
+                    // is not the last block
+                    const lbl = bb.blk_to_lbl.map.get(blk_idx + 1) orelse
+                        try fmt.allocPrint(alloc, BLOCK_INDEX_LABEL_FORMAT, .{blk_idx + 1});
+                    const out = try alloc.alloc([]const u8, 1);
+                    out[0] = lbl;
+                    break :blk out;
+                } else @as([]const []const u8, &.{}),
             };
             try cfg.map.put(alloc, blk_lbl, succs);
         }
