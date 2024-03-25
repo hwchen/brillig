@@ -21,12 +21,12 @@ pub fn main() !void {
         \\--graphviz               Write graphviz file to stdout.
     );
 
-    var diag = clap.Diagnostic{};
+    var cdiag = clap.Diagnostic{};
     var opts = clap.parse(clap.Help, &params, clap.parsers.default, .{
-        .diagnostic = &diag,
+        .diagnostic = &cdiag,
         .allocator = alloc,
     }) catch |err| {
-        diag.report(std.io.getStdErr().writer(), err) catch {};
+        cdiag.report(std.io.getStdErr().writer(), err) catch {};
         return err;
     };
     defer opts.deinit();
