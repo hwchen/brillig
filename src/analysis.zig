@@ -7,16 +7,14 @@ const StringMap = std.json.ArrayHashMap; // Needed to get json serialization
 const bril = @import("bril.zig");
 
 const Block = []bril.Instruction;
-// A control flow graph for the full program.
-// However, it looks like usually there's separate graphs for CFG and inter-procedural CFG.
-// I'll just keep it as-is for the moment until it needs to be refactored. In the meantime,
-// analysis on cfg within the block can be performed by just ignoring `call`.
 const BasicBlocks = struct {
     blocks: []Block,
     // if there's no label, then the implied label is the index in blocks
     blk_to_lbl: IntStringMap,
     lbl_to_blk: StringMap(usize),
-    fn_to_blk: StringMap(usize),
+};
+const ProgramBasicBlocks = struct {
+    functions: StringMap(BasicBlocks),
 };
 
 // thin wrapper, to make it serializable to json
@@ -36,15 +34,14 @@ const IntStringMap = struct {
     }
 };
 
-pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !BasicBlocks {
-    var blocks = ArrayList(Block).init(alloc);
-    var blk_to_lbl = IntStringMap{};
-    var lbl_to_blk = StringMap(usize){};
-    var fn_to_blk = StringMap(usize){};
-    for (program.functions) |function| {
+pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !ProgramBasicBlocks {
+    var fbb = StringMap(BasicBlocks){};
+    for (program.functions) |func| {
+        var blocks = ArrayList(Block).init(alloc);
+        var blk_to_lbl = IntStringMap{};
+        var lbl_to_blk = StringMap(usize){};
         var block = ArrayList(bril.Instruction).init(alloc);
-        for (function.instrs, 0..) |code, code_idx| {
-            if (code_idx == 0) try fn_to_blk.map.put(alloc, function.name, blocks.items.len);
+        for (func.instrs, 0..) |code, code_idx| {
             switch (code) {
                 .Label => |lbl| {
                     // if label comes after the first instruction, and if previous block ended in non-terminal
@@ -70,42 +67,41 @@ pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !BasicBlocks {
         }
         // Don't append again if the last instruction was a terminal, which already appends block
         if (block.items.len != 0) try blocks.append(try block.toOwnedSlice());
+        try fbb.map.put(alloc, func.name, BasicBlocks{ .blocks = try blocks.toOwnedSlice(), .blk_to_lbl = blk_to_lbl, .lbl_to_blk = lbl_to_blk });
     }
-    return .{ .blocks = try blocks.toOwnedSlice(), .blk_to_lbl = blk_to_lbl, .lbl_to_blk = lbl_to_blk, .fn_to_blk = fn_to_blk };
+    return ProgramBasicBlocks{ .functions = fbb };
 }
 
 pub const ControlFlowGraph = StringMap([]const []const u8);
+pub const ProgramControlFlowGraph = StringMap(ControlFlowGraph);
 
-pub fn controlFlowGraph(bb: BasicBlocks, alloc: Allocator) !ControlFlowGraph {
-    var cfg = ControlFlowGraph{};
-    const blks = bb.blocks;
-    for (blks, 0..) |blk, blk_idx| {
-        const blk_lbl = bb.blk_to_lbl.map.get(blk_idx) orelse try printLabel(alloc, blk_idx);
-        var succs = StringMap(void){};
-        for (blk, 0..) |instr, instr_idx| {
-            switch (instr.op) {
-                .ret => continue,
-                .br, .jmp => {
-                    for (instr.labels.?) |lbl| {
-                        try succs.map.put(alloc, lbl, {});
+pub fn controlFlowGraph(pbb: ProgramBasicBlocks, alloc: Allocator) !ProgramControlFlowGraph {
+    var pcfg = ProgramControlFlowGraph{};
+    const fnbb = pbb.functions.map;
+    for (fnbb.keys(), fnbb.values()) |fn_name, bb| {
+        var cfg = ControlFlowGraph{};
+        const blks = bb.blocks;
+        for (blks, 0..) |blk, blk_idx| {
+            const blk_lbl = bb.blk_to_lbl.map.get(blk_idx) orelse try printLabel(alloc, blk_idx);
+            const last_instr = blk[blk.len - 1];
+            const succs = switch (last_instr.op) {
+                .jmp, .br => last_instr.labels.?,
+                .ret => @as([]const []const u8, &.{}),
+                else => blk: {
+                    var out = ArrayList([]const u8).init(alloc);
+                    if (blk_idx < blks.len - 1) {
+                        // is not the last block
+                        const lbl = bb.blk_to_lbl.map.get(blk_idx + 1) orelse try printLabel(alloc, blk_idx + 1);
+                        try out.append(lbl);
                     }
+                    break :blk try out.toOwnedSlice();
                 },
-                .call => {
-                    // Assume just one function called at a time?
-                    const called_blk_idx = bb.fn_to_blk.map.get(instr.funcs.?[0]).?;
-                    const lbl = bb.blk_to_lbl.map.get(called_blk_idx) orelse try printLabel(alloc, called_blk_idx);
-                    try succs.map.put(alloc, lbl, {});
-                },
-                else => if (instr_idx >= blk.len - 1 and blk_idx < blks.len - 1) {
-                    // last instruction in block, and is not the last block
-                    const lbl = bb.blk_to_lbl.map.get(blk_idx + 1) orelse try printLabel(alloc, blk_idx + 1);
-                    try succs.map.put(alloc, lbl, {});
-                },
-            }
+            };
+            try cfg.map.put(alloc, blk_lbl, succs);
         }
-        try cfg.map.put(alloc, blk_lbl, succs.map.keys());
+        try pcfg.map.put(alloc, fn_name, cfg);
     }
-    return cfg;
+    return pcfg;
 }
 
 // given block index, print label

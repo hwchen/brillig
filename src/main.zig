@@ -65,20 +65,19 @@ pub fn main() !void {
 
 // bw: buffered writer
 // flushes immediately
-fn writeGraphviz(cfg: analysis.ControlFlowGraph, bwtr: anytype) !void {
+fn writeGraphviz(pcfg: analysis.ProgramControlFlowGraph, bwtr: anytype) !void {
     var bw = bwtr;
     const w = bw.writer();
     try w.print("digraph cfg {{\n", .{});
-    for (cfg.map.keys()) |label| {
-        try w.print("  {s};\n", .{label});
-    }
+    for (pcfg.map.keys(), pcfg.map.values()) |fn_name, cfg| {
+        for (cfg.map.keys()) |label| {
+            try w.print("  {s}::{s};\n", .{ fn_name, label });
+        }
 
-    var it = cfg.map.iterator();
-    while (it.next()) |kv| {
-        const label = kv.key_ptr.*;
-        const succs = kv.value_ptr.*;
-        for (succs) |succ| {
-            try w.print("  {s} -> {s};\n", .{ label, succ });
+        for (cfg.map.keys(), cfg.map.values()) |label, succs| {
+            for (succs) |succ| {
+                try w.print("  {s}::{s} -> {s}::{s};\n", .{ fn_name, label, fn_name, succ });
+            }
         }
     }
     try w.print("}}\n", .{});
