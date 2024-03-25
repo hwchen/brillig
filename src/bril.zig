@@ -92,6 +92,7 @@ pub const Op = enum {
     not, @"and", @"or",
     jmp, br, call, ret,
     @"const", print,
+    nop,
     // zig fmt: on
 
     pub fn isTerminal(self: Op) bool {
