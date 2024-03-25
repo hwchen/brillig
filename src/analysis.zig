@@ -5,6 +5,8 @@ const ArrayList = std.ArrayList;
 const StringMap = std.json.ArrayHashMap; // Needed to get json serialization
 
 const bril = @import("bril.zig");
+const json = @import("json.zig");
+const IntStringMap = json.IntStringMap;
 
 const Block = []bril.Instruction;
 const BasicBlocks = struct {
@@ -15,23 +17,6 @@ const BasicBlocks = struct {
 };
 const ProgramBasicBlocks = struct {
     functions: StringMap(BasicBlocks),
-};
-
-// thin wrapper, to make it serializable to json
-const IntStringMap = struct {
-    map: std.AutoHashMapUnmanaged(usize, []const u8) = std.AutoHashMapUnmanaged(usize, []const u8){},
-
-    pub fn jsonStringify(self: @This(), jws: anytype) !void {
-        var buf: [32]u8 = undefined; //32 chars should be plenty for numeric label?
-        try jws.beginObject();
-        var it = self.map.iterator();
-        while (it.next()) |kv| {
-            const k = try std.fmt.bufPrint(&buf, "{d}", .{kv.key_ptr.*});
-            try jws.objectField(k);
-            try jws.write(kv.value_ptr.*);
-        }
-        try jws.endObject();
-    }
 };
 
 pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !ProgramBasicBlocks {
@@ -82,7 +67,7 @@ pub fn controlFlowGraph(pbb: ProgramBasicBlocks, alloc: Allocator) !ProgramContr
         var cfg = ControlFlowGraph{};
         const blks = bb.blocks;
         for (blks, 0..) |blk, blk_idx| {
-            const blk_lbl = bb.blk_to_lbl.map.get(blk_idx) orelse try printLabel(alloc, blk_idx);
+            const blk_lbl = bb.blk_to_lbl.map.get(blk_idx) orelse try blockIndexLabel(alloc, blk_idx);
             const last_instr = blk[blk.len - 1];
             const succs = switch (last_instr.op) {
                 .jmp, .br => last_instr.labels.?,
@@ -91,7 +76,7 @@ pub fn controlFlowGraph(pbb: ProgramBasicBlocks, alloc: Allocator) !ProgramContr
                     var out = ArrayList([]const u8).init(alloc);
                     if (blk_idx < blks.len - 1) {
                         // is not the last block
-                        const lbl = bb.blk_to_lbl.map.get(blk_idx + 1) orelse try printLabel(alloc, blk_idx + 1);
+                        const lbl = bb.blk_to_lbl.map.get(blk_idx + 1) orelse try blockIndexLabel(alloc, blk_idx + 1);
                         try out.append(lbl);
                     }
                     break :blk try out.toOwnedSlice();
@@ -107,6 +92,6 @@ pub fn controlFlowGraph(pbb: ProgramBasicBlocks, alloc: Allocator) !ProgramContr
 // given block index, print label
 // Factored out in case I want to change label formatting easily.
 // Don't forget that IntStringMap has a separate formatting for the label.
-fn printLabel(alloc: Allocator, idx: usize) ![]const u8 {
+fn blockIndexLabel(alloc: Allocator, idx: usize) ![]const u8 {
     return try std.fmt.allocPrint(alloc, "{d}", .{idx});
 }
