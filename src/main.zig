@@ -13,11 +13,10 @@ pub fn main() !void {
 
     // Start set up CLI
     const params = comptime clap.parseParamsComptime(
-        \\-h, --help           Display this help and exit.
-        \\--blocks              Display basic blocks, block map.
-        \\--control-flow-graph Display control flow graph.
-        \\--analyzed           Display final analyzed result.
-        \\--graphviz           Write graphviz file to stdout.
+        \\-h, --help               Display this help and exit.
+        \\-b, --blocks             Display basic blocks, block map.
+        \\-c, --control-flow-graph Display control flow graph.
+        \\--graphviz               Write graphviz file to stdout.
     );
 
     var diag = clap.Diagnostic{};
