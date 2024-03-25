@@ -17,6 +17,11 @@ const BasicBlocks = struct {
     blk_to_lbl: IntStringMap,
     lbl_to_blk: StringMap(usize),
 
+    // Carried over from bril.Function so we don't lose info when converting back.
+    name: []const u8,
+    args: ?[]const bril.FunctionArg = null,
+    type: ?bril.Type = null,
+
     // thin wrapper, to make it serializable to json
     const IntStringMap = struct {
         map: std.AutoHashMapUnmanaged(usize, []const u8) = std.AutoHashMapUnmanaged(usize, []const u8){},
@@ -33,9 +38,31 @@ const BasicBlocks = struct {
             try jws.endObject();
         }
     };
+
+    pub fn toBril(bb: BasicBlocks, alloc: Allocator) !bril.Function {
+        var instrs = ArrayList(bril.Code).init(alloc);
+        for (bb.blocks, 0..) |block, blk_idx| {
+            if (bb.blk_to_lbl.map.get(blk_idx)) |label| {
+                try instrs.append(.{ .Label = .{ .label = label } });
+            }
+            for (block) |instr| {
+                try instrs.append(.{ .Instruction = instr });
+            }
+        }
+        return bril.Function{ .name = bb.name, .args = bb.args, .type = bb.type, .instrs = try instrs.toOwnedSlice() };
+    }
 };
 const ProgramBasicBlocks = struct {
     functions: StringMap(BasicBlocks),
+
+    pub fn toBril(pbb: ProgramBasicBlocks, alloc: Allocator) !bril.Program {
+        var fns = ArrayList(bril.Function).init(alloc);
+        const pbb_fns = pbb.functions.map;
+        for (pbb_fns.values()) |bb| {
+            try fns.append(try bb.toBril(alloc));
+        }
+        return bril.Program{ .functions = try fns.toOwnedSlice() };
+    }
 };
 
 pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !ProgramBasicBlocks {
@@ -71,7 +98,18 @@ pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !ProgramBasicBloc
         }
         // Don't append again if the last instruction was a terminal, which already appends block
         if (block.items.len != 0) try blocks.append(try block.toOwnedSlice());
-        try fbb.map.put(alloc, func.name, BasicBlocks{ .blocks = try blocks.toOwnedSlice(), .blk_to_lbl = blk_to_lbl, .lbl_to_blk = lbl_to_blk });
+        try fbb.map.put(
+            alloc,
+            func.name,
+            BasicBlocks{
+                .blocks = try blocks.toOwnedSlice(),
+                .blk_to_lbl = blk_to_lbl,
+                .lbl_to_blk = lbl_to_blk,
+                .name = func.name,
+                .args = func.args,
+                .type = func.type,
+            },
+        );
     }
     return ProgramBasicBlocks{ .functions = fbb };
 }
@@ -82,7 +120,7 @@ pub const ProgramControlFlowGraph = StringMap(ControlFlowGraph);
 pub fn controlFlowGraph(pbb: ProgramBasicBlocks, alloc: Allocator) !ProgramControlFlowGraph {
     var pcfg = ProgramControlFlowGraph{};
     const fnbb = pbb.functions.map;
-    for (fnbb.keys(), fnbb.values()) |fn_name, bb| {
+    for (fnbb.values()) |bb| {
         var cfg = ControlFlowGraph{};
         const blks = bb.blocks;
         for (blks, 0..) |blk, blk_idx| {
@@ -103,7 +141,7 @@ pub fn controlFlowGraph(pbb: ProgramBasicBlocks, alloc: Allocator) !ProgramContr
             };
             try cfg.map.put(alloc, blk_lbl, succs);
         }
-        try pcfg.map.put(alloc, fn_name, cfg);
+        try pcfg.map.put(alloc, bb.name, cfg);
     }
     return pcfg;
 }

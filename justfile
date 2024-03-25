@@ -9,3 +9,8 @@ test *args="":
 
 graphviz bril-file:
     just run-with {{bril-file}} --graphviz | dot -Tpdf -o scratch/cfg.pdf && evince scratch/cfg.pdf
+
+# round trip to test conversion of bril.Program to basic blocks and back.
+# jq sorts keys with `-S`
+roundtrip bril-file:
+    diff <(just run-with {{bril-file}} --unoptimized | jq -S) <(cat {{bril-file}} | bril2json)

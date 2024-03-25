@@ -14,8 +14,10 @@ pub fn main() !void {
     // Start set up CLI
     const params = comptime clap.parseParamsComptime(
         \\-h, --help               Display this help and exit.
-        \\-b, --blocks             Display basic blocks, block map.
-        \\-c, --control-flow-graph Display control flow graph.
+        \\-U, --unoptimized        Display unoptimized program (useful for roundtrip testing of serde).
+        \\-B, --blocks             Display basic blocks, block map.
+        \\-C, --control-flow-graph Display control flow graph.
+        \\-O, --optimized          Display optimized program.
         \\--graphviz               Write graphviz file to stdout.
     );
 
@@ -60,6 +62,14 @@ pub fn main() !void {
     const cfg = try analysis.controlFlowGraph(basic_blocks, alloc);
     if (opts.args.@"control-flow-graph" != 0) try writeJson(cfg, bwtr);
     if (opts.args.graphviz != 0) try writeGraphviz(cfg, bwtr);
+
+    // output unoptimized instructions
+    if (opts.args.unoptimized != 0) try writeJson(try basic_blocks.toBril(alloc), bwtr);
+
+    // do optimizations
+
+    // output optimized instructions
+    if (opts.args.optimized != 0) try writeJson(try basic_blocks.toBril(alloc), bwtr);
 }
 
 // bw: buffered writer

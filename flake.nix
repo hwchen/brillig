@@ -58,6 +58,7 @@
 
         pkgs.graphviz
         pkgs.python311Packages.turnt # for testing
+        pkgs.jq # for sorting keys and pretty-printing output
         ];
         # for brili executable
         PATH = "/home/hwchen/.deno/bin:$PATH";
