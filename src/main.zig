@@ -14,9 +14,9 @@ pub fn main() !void {
     // Start set up CLI
     const params = comptime clap.parseParamsComptime(
         \\-h, --help               Display this help and exit.
-        \\-U, --unoptimized        Display unoptimized program (useful for roundtrip testing of serde).
         \\-B, --blocks             Display basic blocks, block map.
         \\-C, --control-flow-graph Display control flow graph.
+        \\-U, --unoptimized        Display unoptimized program (useful for roundtrip testing of serde).
         \\-O, --optimized          Display optimized program.
         \\--graphviz               Write graphviz file to stdout.
     );
