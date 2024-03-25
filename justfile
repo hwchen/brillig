@@ -12,5 +12,7 @@
 
 # round trip to test conversion of bril.Program to basic blocks and back.
 # jq sorts keys with `-S`
+# Can be used like `find bril bril/test/interp/core --exec just roundtrip`
+# TODO put this into test suite
 @roundtrip bril-file:
     diff <(just run-with {{bril-file}} --unoptimized | jq -S) <(cat {{bril-file}} | bril2json)
