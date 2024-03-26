@@ -62,31 +62,30 @@ pub fn main() !void {
     };
 
     const stdout = std.io.getStdOut();
-    const bwtr = std.io.bufferedWriter(stdout.writer());
+    var bwtr = std.io.bufferedWriter(stdout.writer());
 
     // blocks
     // output written immediately to be able to show at least some output in case of crash
     var basic_blocks = try analysis.genBasicBlocks(in_json, alloc);
-    if (opts.args.blocks != 0) try writeJson(basic_blocks, bwtr);
+    if (opts.args.blocks != 0) try writeJson(basic_blocks, &bwtr);
 
     // cfg
     const cfg = try analysis.controlFlowGraph(basic_blocks, alloc);
-    if (opts.args.@"control-flow-graph" != 0) try writeJson(cfg, bwtr);
-    if (opts.args.graphviz != 0) try writeGraphviz(cfg, bwtr);
+    if (opts.args.@"control-flow-graph" != 0) try writeJson(cfg, &bwtr);
+    if (opts.args.graphviz != 0) try writeGraphviz(cfg, &bwtr);
 
     // output unoptimized instructions
-    if (opts.args.unoptimized != 0) try writeJson(try basic_blocks.toBril(alloc), bwtr);
+    if (opts.args.unoptimized != 0) try writeJson(try basic_blocks.toBril(alloc), &bwtr);
 
     // dead code elimination
     try analysis.deadCodeEliminationSimple(&basic_blocks, scratch_alloc);
-    if (opts.args.@"dead-code-elimination" != 0) try writeJson(try basic_blocks.toBril(alloc), bwtr);
+    if (opts.args.@"dead-code-elimination" != 0) try writeJson(try basic_blocks.toBril(alloc), &bwtr);
 }
 
 // bw: buffered writer
 // flushes immediately
 fn writeGraphviz(pcfg: analysis.ProgramControlFlowGraph, bwtr: anytype) !void {
-    var bw = bwtr;
-    const w = bw.writer();
+    const w = bwtr.writer();
     try w.print("digraph cfg {{\n", .{});
     for (pcfg.map.keys(), pcfg.map.values()) |fn_name, cfg| {
         for (cfg.map.keys()) |label| {
@@ -100,15 +99,14 @@ fn writeGraphviz(pcfg: analysis.ProgramControlFlowGraph, bwtr: anytype) !void {
         }
     }
     try w.print("}}\n", .{});
-    try bw.flush();
+    try bwtr.flush();
 }
 
 // bwtr: buffered writer
 // flushes immediately
 fn writeJson(v: anytype, bwtr: anytype) !void {
-    var bw = bwtr; // TODO is there a way to avoid this reassignment? Should I pass by pointer?
-    const w = bw.writer();
+    const w = bwtr.writer();
     try std.json.stringify(v, .{ .emit_null_optional_fields = false }, w);
     _ = try w.write("\n");
-    try bw.flush();
+    try bwtr.flush();
 }
