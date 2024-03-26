@@ -7,9 +7,20 @@ const bril = @import("bril.zig");
 const analysis = @import("analysis.zig");
 
 pub fn main() !void {
+    // Used for long-lived data and structures referencing that data:
+    // - input bril
+    // - basic blocks
+    // - output bril
+    // Never freed
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const alloc = arena.allocator();
+
+    // scratch allocator, used for short-lived data structures.
+    // Can be freed at any time.
+    var scratch_arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer scratch_arena.deinit();
+    const scratch_alloc = scratch_arena.allocator();
 
     // Start set up CLI
     const params = comptime clap.parseParamsComptime(
@@ -67,7 +78,7 @@ pub fn main() !void {
     if (opts.args.unoptimized != 0) try writeJson(try basic_blocks.toBril(alloc), bwtr);
 
     // dead code elimination
-    try analysis.deadCodeEliminationSimple(&basic_blocks, alloc);
+    try analysis.deadCodeEliminationSimple(&basic_blocks, scratch_alloc);
     if (opts.args.@"dead-code-elimination" != 0) try writeJson(try basic_blocks.toBril(alloc), bwtr);
 }
 

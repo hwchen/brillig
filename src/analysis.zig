@@ -148,10 +148,10 @@ pub fn controlFlowGraph(pbb: ProgramBasicBlocks, alloc: Allocator) !ProgramContr
 
 // Currently operations on basic blocks are mutable.
 // Since size of slices only decrease, shouldn't have to allocate.
-pub fn deadCodeEliminationSimple(pbb: *ProgramBasicBlocks, alloc: Allocator) !void {
+pub fn deadCodeEliminationSimple(pbb: *ProgramBasicBlocks, scratch_alloc: Allocator) !void {
     for (pbb.functions.map.values()) |*bb| {
-        var used = std.StringHashMap(void).init(alloc);
-        defer used.deinit(); // TODO use scratch alloc for `used`
+        var used = std.StringHashMap(void).init(scratch_alloc);
+        defer used.deinit();
 
         // First loop over all instrs, to collect set of used args
         for (bb.*.blocks) |b| {
