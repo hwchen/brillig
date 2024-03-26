@@ -16,3 +16,7 @@
 # TODO put this into test suite
 @roundtrip bril-file:
     diff <(just run-with {{bril-file}} --unoptimized | jq -S) <(cat {{bril-file}} | bril2json)
+
+# try with bril/examples/test/tdce/simple.bril
+@dce bril-file:
+    just run-with {{bril-file}} --dead-code-elimination

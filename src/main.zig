@@ -17,7 +17,7 @@ pub fn main() !void {
         \\-B, --blocks                Display basic blocks, block map.
         \\-C, --control-flow-graph    Display control flow graph.
         \\-U, --unoptimized           Display unoptimized program (useful for roundtrip testing of serde).
-        \\-O, --optimized             Display optimized program.
+        \\-D, --dead-code-elimination Display program after dead code elimination.
         \\--graphviz                  Write graphviz file to stdout.
     );
 
@@ -66,11 +66,9 @@ pub fn main() !void {
     // output unoptimized instructions
     if (opts.args.unoptimized != 0) try writeJson(try basic_blocks.toBril(alloc), bwtr);
 
-    // do optimizations
+    // dead code elimination
     try analysis.deadCodeEliminationSimple(&basic_blocks, alloc);
-
-    // output optimized instructions
-    if (opts.args.optimized != 0) try writeJson(try basic_blocks.toBril(alloc), bwtr);
+    if (opts.args.@"dead-code-elimination" != 0) try writeJson(try basic_blocks.toBril(alloc), bwtr);
 }
 
 // bw: buffered writer
