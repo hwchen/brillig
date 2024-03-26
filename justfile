@@ -18,5 +18,6 @@
     diff <(just run-with {{bril-file}} --unoptimized | jq -S) <(cat {{bril-file}} | bril2json)
 
 # try with bril/examples/test/tdce/simple.bril
+# shows before and after.
 @dce bril-file:
-    just run-with {{bril-file}} --dead-code-elimination
+    just run-with {{bril-file}} --unoptimized --dead-code-elimination
