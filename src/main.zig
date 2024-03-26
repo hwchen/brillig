@@ -13,12 +13,12 @@ pub fn main() !void {
 
     // Start set up CLI
     const params = comptime clap.parseParamsComptime(
-        \\-h, --help               Display this help and exit.
-        \\-B, --blocks             Display basic blocks, block map.
-        \\-C, --control-flow-graph Display control flow graph.
-        \\-U, --unoptimized        Display unoptimized program (useful for roundtrip testing of serde).
-        \\-O, --optimized          Display optimized program.
-        \\--graphviz               Write graphviz file to stdout.
+        \\-h, --help                  Display this help and exit.
+        \\-B, --blocks                Display basic blocks, block map.
+        \\-C, --control-flow-graph    Display control flow graph.
+        \\-U, --unoptimized           Display unoptimized program (useful for roundtrip testing of serde).
+        \\-O, --optimized             Display optimized program.
+        \\--graphviz                  Write graphviz file to stdout.
     );
 
     var cdiag = clap.Diagnostic{};
@@ -55,7 +55,7 @@ pub fn main() !void {
 
     // blocks
     // output written immediately to be able to show at least some output in case of crash
-    const basic_blocks = try analysis.genBasicBlocks(in_json, alloc);
+    var basic_blocks = try analysis.genBasicBlocks(in_json, alloc);
     if (opts.args.blocks != 0) try writeJson(basic_blocks, bwtr);
 
     // cfg
@@ -67,6 +67,7 @@ pub fn main() !void {
     if (opts.args.unoptimized != 0) try writeJson(try basic_blocks.toBril(alloc), bwtr);
 
     // do optimizations
+    try analysis.deadCodeEliminationSimple(&basic_blocks, alloc);
 
     // output optimized instructions
     if (opts.args.optimized != 0) try writeJson(try basic_blocks.toBril(alloc), bwtr);
