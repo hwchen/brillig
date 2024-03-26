@@ -1,0 +1,1 @@
+command = "cat {filename} | bril2json | just run --dead-code-elimination | bril2txt"
