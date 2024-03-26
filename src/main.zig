@@ -27,7 +27,7 @@ pub fn main() !void {
         .allocator = alloc,
     }) catch |err| {
         cdiag.report(std.io.getStdErr().writer(), err) catch {};
-        return err;
+        return;
     };
     defer opts.deinit();
     if (opts.args.help != 0) {
