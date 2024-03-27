@@ -1,0 +1,11 @@
+@main {
+  a: int = const 47;
+  cond: bool = const true;
+  br cond .left .right;
+.left:
+  jmp .end;
+.right:
+  jmp .end;
+.end:
+  print a;
+}
