@@ -20,4 +20,5 @@
 # try with bril/examples/test/tdce/simple.bril
 # shows before and after.
 @dce bril-file:
-    just run-file {{bril-file}} --unoptimized --dead-code-elimination
+    just run-file {{bril-file}} --unoptimized | bril2txt
+    just run-file {{bril-file}} --dead-code-elimination | bril2txt

@@ -78,7 +78,8 @@ pub fn main() !void {
     if (opts.args.unoptimized != 0) try writeJson(try basic_blocks.toBril(alloc), &bwtr);
 
     // dead code elimination
-    try analysis.deadCodeEliminationSimple(&basic_blocks, scratch_alloc);
+    try analysis.deadCodeEliminationGloballyUnused(&basic_blocks, scratch_alloc);
+    try analysis.deadCodeEliminationLocallyKilled(&basic_blocks, scratch_alloc);
     if (opts.args.@"dead-code-elimination" != 0) try writeJson(try basic_blocks.toBril(alloc), &bwtr);
 }
 

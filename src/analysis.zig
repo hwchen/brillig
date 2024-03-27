@@ -148,7 +148,7 @@ pub fn controlFlowGraph(pbb: ProgramBasicBlocks, alloc: Allocator) !ProgramContr
 
 // Currently operations on basic blocks are mutable.
 // Since size of slices only decrease, shouldn't have to allocate.
-pub fn deadCodeEliminationSimple(pbb: *ProgramBasicBlocks, scratch_alloc: Allocator) !void {
+pub fn deadCodeEliminationGloballyUnused(pbb: *ProgramBasicBlocks, scratch_alloc: Allocator) !void {
     for (pbb.functions.map.values()) |bb| {
         var used = std.StringHashMap(void).init(scratch_alloc);
         defer used.deinit();
@@ -179,6 +179,36 @@ pub fn deadCodeEliminationSimple(pbb: *ProgramBasicBlocks, scratch_alloc: Alloca
                 }
                 b.* = instrs.items;
             }
+        }
+    }
+}
+
+pub fn deadCodeEliminationLocallyKilled(pbb: *ProgramBasicBlocks, scratch_alloc: Allocator) !void {
+    for (pbb.functions.map.values()) |bb| {
+        var declared = std.StringHashMap(void).init(scratch_alloc);
+        defer declared.deinit();
+
+        for (bb.blocks) |*b| {
+            var instrs = std.ArrayListUnmanaged(bril.Instruction).fromOwnedSlice(b.*);
+            var i = instrs.items.len;
+            while (i > 0) {
+                i -= 1;
+                const instr = instrs.items[i];
+                if (instr.args) |args| {
+                    for (args) |arg| {
+                        _ = declared.remove(arg);
+                    }
+                }
+
+                if (instr.dest) |dest| {
+                    if (declared.contains(dest)) {
+                        _ = instrs.orderedRemove(i);
+                    } else {
+                        try declared.put(dest, {});
+                    }
+                }
+            }
+            b.* = instrs.items;
         }
     }
 }
