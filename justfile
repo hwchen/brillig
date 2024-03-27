@@ -22,3 +22,6 @@
 @dce bril-file:
     just run-file {{bril-file}} --unoptimized | bril2txt
     just run-file {{bril-file}} --dead-code-elimination | bril2txt
+
+@brili *args="":
+    deno run bril/brili.ts {{args}}
