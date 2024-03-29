@@ -185,10 +185,9 @@ pub fn deadCodeEliminationGloballyUnused(pbb: *ProgramBasicBlocks, scratch_alloc
 
 pub fn deadCodeEliminationLocallyKilled(pbb: *ProgramBasicBlocks, scratch_alloc: Allocator) !void {
     for (pbb.functions.map.values()) |bb| {
-        var declared = std.StringHashMap(void).init(scratch_alloc);
-        defer declared.deinit();
-
         for (bb.blocks) |*b| {
+            var declared = std.StringHashMap(void).init(scratch_alloc);
+            defer declared.deinit();
             var instrs = std.ArrayListUnmanaged(bril.Instruction).fromOwnedSlice(b.*);
             var i = instrs.items.len;
             while (i > 0) {
