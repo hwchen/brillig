@@ -1,1 +1,2 @@
-command = "cat {filename} | bril2json | just run --dead-code-elimination | bril2txt"
+[envs.brilz]
+command = "cat {filename} | bril2json | just brilz --dead-code-elimination | bril2txt"
