@@ -8,9 +8,9 @@ Program :: struct {
 
 Function :: struct {
     name:   string,
-    args:   []FunctionArg,
+    args:   Maybe([]FunctionArg),
     type:   Maybe(Type),
-    instrs: []Code,
+    instrs: []Instruction,
 }
 
 FunctionArg :: struct {
@@ -18,24 +18,27 @@ FunctionArg :: struct {
     type: Type,
 }
 
-Code :: union {
-    Instruction,
-    Label,
-}
-
-Label :: struct {
-    label: string,
-}
-
+/// We don't add any additional structure to the deserialized instruction.
+/// Decided it's not worth it in terms of additional code :) . And shouldn't
+/// be particularly error-prone to differentiate between instructions.
+///
+/// Labels use the `label` field only
+/// Instructions must have an `op` field.
+/// `value` is a field only used for `const`
 Instruction :: struct {
-    op:     Op,
+    // if label
+    label:  Maybe(string),
+    // if instr
+    op:     Maybe(Op),
     dest:   Maybe(string),
     type:   Maybe(Type),
     args:   Maybe([]string),
     funcs:  Maybe([]string),
     labels: Maybe([]string),
-    value:  Maybe(Value), // for Constant
+    // for constant
+    value:  Value, // unions have nil value
 }
+
 
 Value :: union {
     bool,
@@ -54,7 +57,7 @@ Op :: enum {
 // odinfmt:enable
 
 is_op_terminal :: proc(op: Op) -> bool {
-    switch self {
+    #partial switch op {
     case .jmp, .br, .ret:
         return true
     case:

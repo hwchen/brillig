@@ -12,9 +12,8 @@ main :: proc() {
     buf: [4096]u8
     bytes_read, _ := os.read(os.stdin, buf[:])
 
-
-    json_program: JsonProgram
-    _jin_err := json.unmarshal(buf[:bytes_read], &json_program)
-    j_out, _jout_err := json.marshal(json_program, {})
+    program: Program
+    _jinerr := json.unmarshal(buf[:bytes_read], &program)
+    j_out, _jout_err := json.marshal(program, {use_enum_names = true})
     fmt.print(transmute(string)j_out)
 }
