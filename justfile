@@ -1,4 +1,12 @@
 # Language-specific commands
+@brilo-build:
+    odin build brilo
+
+@brilo *args="":
+    just brilo-build && ./brilo.bin {{args}}
+
+@brilo-file bril-file *args="":
+    cat {{bril-file}} | bril2json | just brilo {{args}}
 
 @brilz-build:
     cd brilz && zig build
@@ -7,7 +15,7 @@
     just brilz-build && ./brilz/zig-out/bin/bril-zig {{args}}
 
 @brilz-file bril-file *args="":
-    cat {{bril-file}} | bril2json | just run {{args}}
+    cat {{bril-file}} | bril2json | just brilz {{args}}
 
 # None-language-specific commands
 

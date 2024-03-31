@@ -7,3 +7,5 @@ scratch
 zig-cache
 zig-out
 *.pdf
+
+*.bin
