@@ -3,7 +3,7 @@
     odin build brilo
 
 @brilo *args="":
-    just brilo-build && ./brilo.bin {{args}}
+    just brilo-build && ./brilo.bin {{args}} | just clean-nulls -c
 
 @brilo-file bril-file *args="":
     cat {{bril-file}} | bril2json | just brilo {{args}}
@@ -44,3 +44,11 @@
 
 @brili *args="":
     deno run bril/brili.ts {{args}}
+
+# Utils
+
+# Used for brilo, as there doesn't appear to be a way
+# to print json w/out nulls.
+@clean-nulls *args="":
+    jq {{args}} 'del(..|nulls)'
+

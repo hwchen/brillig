@@ -13,8 +13,8 @@ main :: proc() {
     bytes_read, _ := os.read(os.stdin, buf[:])
 
 
-    program: Program
-    _jerr := json.unmarshal(buf[:bytes_read], &program)
-
-    fmt.print(program)
+    json_program: JsonProgram
+    _jin_err := json.unmarshal(buf[:bytes_read], &json_program)
+    j_out, _jout_err := json.marshal(json_program, {})
+    fmt.print(transmute(string)j_out)
 }
