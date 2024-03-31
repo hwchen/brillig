@@ -1,33 +1,28 @@
 package bril
 
-Program :: struct {
-    functions: []Function,
+JsonProgram :: struct {
+    functions: []JsonFunction,
 }
 
-Function :: struct {
+JsonFunction :: struct {
     name:   string,
-    args:   []string,
+    args:   Maybe([]string),
     type:   Maybe(string),
-    instrs: []LabelOrInstruction,
+    instrs: []JsonLabelOrInstruction,
 }
 
-// this does not work with json unmarshaling,
-// as neither struct will error, so the first always succeeds.
-// (missing field does not create an error)
-LabelOrInstruction :: union {
-    Instruction,
-    Label,
-}
-
-Label :: struct {
-    label: string,
-}
-
-Instruction :: struct {
-    op:     string,
+// odin json serde currently requires that we first parse into
+// a more "raw" repr. for example, multiple struct variants in
+// union wouldn't error on parse, so the first one is taken.
+// And there's no way to insert a custom parse phase like in zig.
+JsonLabelOrInstruction :: struct {
+    // if label
+    label:  Maybe(string),
+    // if instr
+    op:     Maybe(string),
     dest:   Maybe(string),
     type:   Maybe(string),
-    args:   []string,
-    funcs:  []string,
-    labels: []string,
+    args:   Maybe([]string),
+    funcs:  Maybe([]string),
+    labels: Maybe([]string),
 }
