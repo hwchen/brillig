@@ -1,4 +1,4 @@
-package bril
+package brilo
 
 //! A bril Program data structure
 
@@ -39,6 +39,10 @@ Instruction :: struct {
     value:  Value, // unions have nil value
 }
 
+instruction_is_label :: proc(instr: Instruction) -> bool {
+    _, ok := instr.label.?
+    return ok
+}
 
 Value :: union {
     bool,
@@ -56,7 +60,7 @@ Op :: enum {
 }
 // odinfmt:enable
 
-is_op_terminal :: proc(op: Op) -> bool {
+op_is_terminal :: proc(op: Op) -> bool {
     #partial switch op {
     case .jmp, .br, .ret:
         return true
