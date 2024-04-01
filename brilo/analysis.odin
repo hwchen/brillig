@@ -12,14 +12,15 @@ BasicBlocks :: struct {
     args:       Maybe([]FunctionArg),
     type:       Maybe(Type),
 }
+// For future lookups, not sure if we need a map of fn names to function blocks.
+// fn name is already carried inside `BasicBlocks`, perhaps that's enough.
 ProgramBasicBlocks :: struct {
-    functions: map[string]BasicBlocks,
+    functions: []BasicBlocks,
 }
 
 basic_blocks2bril :: proc(pbb: ProgramBasicBlocks) -> Program {
     fns: [dynamic]Function
-    pbb_fns := pbb.functions
-    for _, bb in pbb_fns {
+    for bb in pbb.functions {
         instrs: [dynamic]Instruction
         for block, blk_idx in bb.blocks {
             if label, lok := bb.blk_to_lbl[blk_idx]; lok {
@@ -33,7 +34,7 @@ basic_blocks2bril :: proc(pbb: ProgramBasicBlocks) -> Program {
 }
 
 bril2basic_blocks :: proc(program: Program) -> ProgramBasicBlocks {
-    fbb: map[string]BasicBlocks
+    fbb: [dynamic]BasicBlocks
     for func in program.functions {
         blocks: [dynamic]Block
         blk_to_lbl: map[int]string
@@ -62,14 +63,17 @@ bril2basic_blocks :: proc(program: Program) -> ProgramBasicBlocks {
         }
         // Don't append again if the last instruction was a terminal, which already appends block
         if len(block) != 0 do append(&blocks, block[:])
-        fbb[func.name] = BasicBlocks {
-            blocks     = blocks[:],
-            blk_to_lbl = blk_to_lbl,
-            lbl_to_blk = lbl_to_blk,
-            name       = func.name,
-            args       = func.args,
-            type       = func.type,
-        }
+        append(
+            &fbb,
+            BasicBlocks {
+                blocks = blocks[:],
+                blk_to_lbl = blk_to_lbl,
+                lbl_to_blk = lbl_to_blk,
+                name = func.name,
+                args = func.args,
+                type = func.type,
+            },
+        )
     }
-    return ProgramBasicBlocks{functions = fbb}
+    return ProgramBasicBlocks{functions = fbb[:]}
 }
