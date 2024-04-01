@@ -1,2 +1,2 @@
 [envs.brilz]
-command = "cat {filename} | bril2json | just brilz --control-flow-graph"
+command = "cat {filename} | bril2json | just brilz --control-flow-graph | jq -Sc"
