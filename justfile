@@ -32,6 +32,8 @@
 # round trip to test conversion of bril.Program to basic blocks and back.
 # jq sorts keys with `-S`
 # Can be used like `find bril bril/test/interp/core --exec just roundtrip`
+# Be careful with brilo, as odin compiles from scratch every time, so need to set
+# threads to 1 by `find -j=1`
 # TODO put this into test suite
 @roundtrip exe bril-file:
     diff <(just {{exe}}-file {{bril-file}} --unoptimized | jq -S) <(cat {{bril-file}} | bril2json)
