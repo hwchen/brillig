@@ -5,6 +5,9 @@
 @brilo *args="":
     just brilo-build && ./brilo.bin {{args}} | just clean-nulls -c
 
+@brilo-raw *args="":
+    just brilo-build && ./brilo.bin {{args}}
+
 @brilo-file bril-file *args="":
     cat {{bril-file}} | bril2json | just brilo {{args}}
 

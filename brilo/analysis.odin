@@ -1,5 +1,9 @@
 package brilo
 
+import "core:fmt"
+
+BLOCK_INDEX_LABEL_FORMAT := "%d"
+
 Block :: []Instruction
 BasicBlocks :: struct {
     blocks:     []Block,
@@ -76,4 +80,42 @@ bril2basic_blocks :: proc(program: Program) -> ProgramBasicBlocks {
         )
     }
     return ProgramBasicBlocks{functions = fbb[:]}
+}
+
+ControlFlowGraph :: map[string][]string
+ProgramControlFlowGraph :: map[string]ControlFlowGraph
+
+basic_blocks2control_flow_graph :: proc(pbb: ProgramBasicBlocks) -> ProgramControlFlowGraph {
+    pcfg: ProgramControlFlowGraph
+    for bb in pbb.functions {
+        cfg: ControlFlowGraph
+        blks := bb.blocks
+        for blk, blk_idx in blks {
+            blk_lbl :=
+                bb.blk_to_lbl[blk_idx] or_else fmt.aprintf(BLOCK_INDEX_LABEL_FORMAT, blk_idx)
+            last_instr := blk[len(blk) - 1]
+            succs: []string
+            switch last_instr.op {
+            case .jmp, .br:
+                succs = last_instr.labels.?
+            case .ret:
+                succs = {}
+            case:
+                if (blk_idx < len(blks) - 1) {
+                    // is not the last block
+                    lbl :=
+                        bb.blk_to_lbl[blk_idx + 1] or_else fmt.aprintf(
+                            BLOCK_INDEX_LABEL_FORMAT,
+                            blk_idx + 1,
+                        )
+                    out := make([]string, 1)
+                    out[0] = lbl
+                    succs = out
+                } else {succs = {}}
+            }
+            cfg[blk_lbl] = succs
+        }
+        pcfg[bb.name] = cfg
+    }
+    return pcfg
 }

@@ -24,6 +24,11 @@ main :: proc() {
         program_out := basic_blocks2bril(bb)
         write_json(program_out)
     }
+
+    cfg := basic_blocks2control_flow_graph(bb)
+    if cli_opts.control_flow_graph != 0 {
+        write_json(cfg)
+    }
 }
 
 write_json :: proc(val: any) {
@@ -32,7 +37,8 @@ write_json :: proc(val: any) {
 }
 
 CliOpts :: struct {
-    unoptimized: u8,
+    unoptimized:        u8,
+    control_flow_graph: u8,
 }
 
 parse_cli :: proc() -> CliOpts {
@@ -40,6 +46,8 @@ parse_cli :: proc() -> CliOpts {
     for arg in os.args[1:] {
         if arg == "--unoptimized" {
             out.unoptimized += 1
+        } else if arg == "--control-flow-graph" {
+            out.control_flow_graph += 1
         }
     }
     return out
