@@ -29,6 +29,13 @@ main :: proc() {
     if cli_opts.control_flow_graph != 0 {
         write_json(cfg)
     }
+
+    dead_code_elimination_globally_unused(&bb)
+    dead_code_elimination_locally_killed(&bb)
+    if cli_opts.dead_code_elimination != 0 {
+        out := basic_blocks2bril(bb)
+        write_json(out)
+    }
 }
 
 write_json :: proc(val: any) {
@@ -37,8 +44,9 @@ write_json :: proc(val: any) {
 }
 
 CliOpts :: struct {
-    unoptimized:        u8,
-    control_flow_graph: u8,
+    unoptimized:           u8,
+    control_flow_graph:    u8,
+    dead_code_elimination: u8,
 }
 
 parse_cli :: proc() -> CliOpts {
@@ -48,6 +56,8 @@ parse_cli :: proc() -> CliOpts {
             out.unoptimized += 1
         } else if arg == "--control-flow-graph" {
             out.control_flow_graph += 1
+        } else if arg == "--dead-code-elimination" {
+            out.dead_code_elimination += 1
         }
     }
     return out

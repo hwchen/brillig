@@ -119,3 +119,65 @@ basic_blocks2control_flow_graph :: proc(pbb: ProgramBasicBlocks) -> ProgramContr
     }
     return pcfg
 }
+
+// Currently operations on basic blocks are mutable.
+// Since size of slices only decrease, shouldn't have to allocate.
+dead_code_elimination_globally_unused :: proc(pbb: ^ProgramBasicBlocks) {
+    for bb in pbb.functions {
+        converged := false
+        for !converged {
+            converged = true
+            used := make(map[string]struct {}, allocator = context.temp_allocator)
+            defer free_all(context.temp_allocator)
+            // First loop over all instrs, to collect set of used args
+            for b in bb.blocks {
+                for instr in b {
+                    if args, aok := instr.args.?; aok {
+                        for arg in args {
+                            used[arg] = {}
+                        }
+                    }
+                }
+            }
+            // Second loop over instrs, if instr destination not in `used`, delete instr
+            for &instrs in bb.blocks {
+                i := len(instrs)
+                for i > 0 {
+                    i -= 1
+                    if dest, dok := instrs[i].dest.?; dok {
+                        if !(dest in used) {
+                            ordered_remove_slice(&instrs, i)
+                            converged = false
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+dead_code_elimination_locally_killed :: proc(pbb: ^ProgramBasicBlocks) {
+    for bb in pbb.functions {
+        for &instrs in bb.blocks {
+            declared := make(map[string]struct {}, allocator = context.temp_allocator)
+            defer free_all(context.temp_allocator)
+            i := len(instrs)
+            for i > 0 {
+                i -= 1
+                instr := instrs[i]
+                if args, aok := instr.args.?; aok {
+                    for arg in args {
+                        delete_key(&declared, arg)
+                    }
+                }
+                if dest, dok := instr.dest.?; dok {
+                    if dest in declared {
+                        ordered_remove_slice(&instrs, i)
+                    } else {
+                        declared[dest] = {}
+                    }
+                }
+            }
+        }
+    }
+}
