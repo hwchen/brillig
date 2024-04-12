@@ -18,9 +18,17 @@
         zig-overlay.follows = "zig-overlay";
       };
     };
+
+    picogron-flake = {
+      url = "github:hwchen/picogron";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        zig-overlay.follows = "zig-overlay";
+      };
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, zig-overlay, zls-flake }:
+  outputs = { self, nixpkgs, flake-utils, zig-overlay, zls-flake, picogron-flake }:
     flake-utils.lib.eachDefaultSystem (system: let
       odin-overlay = self: super: {
         odin = super.odin.overrideAttrs (old: rec {
@@ -69,6 +77,7 @@
         };
 
         zls = zls-flake.packages.${system}.zls;
+        picogron = picogron-flake.packages.${system}.picogron;
 
         venvDir = "./.venv";
 
@@ -101,6 +110,7 @@
         pkgs.graphviz
         pkgs.python311Packages.turnt # for testing
         pkgs.jq # for sorting keys and pretty-printing output
+        picogron # also for working with json
         ];
         # for brili executable
         PATH = "/home/hwchen/.deno/bin:$PATH";
