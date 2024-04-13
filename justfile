@@ -3,7 +3,7 @@
     odin build brilo
 
 @brilo *args="":
-    just brilo-build && ./brilo.bin {{args}} | just clean-nulls -c
+    just brilo-build && ./brilo.bin {{args}} | just clean-nulls
 
 @brilo-raw *args="":
     just brilo-build && ./brilo.bin {{args}}
@@ -26,7 +26,7 @@
 # --save
 # --diff
 @test *args="":
-    just brilz-build && turnt {{args}} test/**/*.bril
+    just brilz-build && just brilo-build && turnt {{args}} test/**/*.bril
 
 # use brilz or brilo
 @graphviz exe bril-file:
@@ -55,5 +55,6 @@
 # Used for brilo, as there doesn't appear to be a way
 # to print json w/out nulls.
 @clean-nulls *args="":
-    jq {{args}} 'del(..|nulls)'
+    #jq {{args}} 'del(..|nulls)'
+    picogron | rg -v null | picogron -u
 
