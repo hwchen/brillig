@@ -11,14 +11,14 @@
 @obril-file bril-file *args="":
     cat {{bril-file}} | bril2json | just obril {{args}}
 
-@brilz-build:
-    cd brilz && zig build
+@zbril-build:
+    cd zbril && zig build
 
-@brilz *args="":
-    just brilz-build && ./brilz/zig-out/bin/bril-zig {{args}}
+@zbril *args="":
+    just zbril-build && ./zbril/zig-out/bin/zbril {{args}}
 
-@brilz-file bril-file *args="":
-    cat {{bril-file}} | bril2json | just brilz {{args}}
+@zbril-file bril-file *args="":
+    cat {{bril-file}} | bril2json | just zbril {{args}}
 
 # None-language-specific commands
 
@@ -26,9 +26,9 @@
 # --save
 # --diff
 @test *args="":
-    just brilz-build && just obril-build && turnt {{args}} test/**/*.bril
+    just zbril-build && just obril-build && turnt {{args}} test/**/*.bril
 
-# use brilz or obril
+# use zbril or obril
 @graphviz exe bril-file:
     just {{exe}}-file {{bril-file}} --graphviz | dot -Tpdf -o scratch/cfg.pdf && evince scratch/cfg.pdf
 

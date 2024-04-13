@@ -18,7 +18,7 @@ pub fn build(b: *std.Build) void {
     const clap = b.dependency("clap", .{});
 
     const exe = b.addExecutable(.{
-        .name = "bril-zig",
+        .name = "zbril",
         .root_source_file = .{ .path = "src/main.zig" },
         .target = target,
         .optimize = optimize,
