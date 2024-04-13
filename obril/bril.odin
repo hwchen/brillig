@@ -1,4 +1,4 @@
-package brilo
+package obril
 
 //! A bril Program data structure
 

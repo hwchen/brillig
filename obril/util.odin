@@ -1,4 +1,4 @@
-package brilo
+package obril
 
 ordered_remove_slice :: proc(s: ^$S/[]$E, i: int) {
     if s == nil {

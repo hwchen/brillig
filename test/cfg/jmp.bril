@@ -1,1 +1,7 @@
-../../bril/test/interp/core/jmp.bril
+@main {
+  v: int = const 4;
+  jmp .somewhere;
+  v: int = const 2;
+.somewhere:
+  print v;
+}

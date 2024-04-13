@@ -1,5 +1,5 @@
 [envs.brilz]
 command = "cat {filename} | bril2json | just brilz --control-flow-graph | jq -Sc"
 
-[envs.brilo]
-command = "cat {filename} | bril2json | just brilo --control-flow-graph | jq -Sc"
+[envs.obril]
+command = "cat {filename} | bril2json | just obril --control-flow-graph | jq -Sc"

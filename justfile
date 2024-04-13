@@ -1,15 +1,15 @@
 # Language-specific commands
-@brilo-build:
-    odin build brilo
+@obril-build:
+    odin build obril
 
-@brilo *args="":
-    just brilo-build && ./brilo.bin {{args}} | just clean-nulls
+@obril *args="":
+    just obril-build && ./obril.bin {{args}} | just clean-nulls
 
-@brilo-raw *args="":
-    just brilo-build && ./brilo.bin {{args}}
+@obril-raw *args="":
+    just obril-build && ./obril.bin {{args}}
 
-@brilo-file bril-file *args="":
-    cat {{bril-file}} | bril2json | just brilo {{args}}
+@obril-file bril-file *args="":
+    cat {{bril-file}} | bril2json | just obril {{args}}
 
 @brilz-build:
     cd brilz && zig build
@@ -26,16 +26,16 @@
 # --save
 # --diff
 @test *args="":
-    just brilz-build && just brilo-build && turnt {{args}} test/**/*.bril
+    just brilz-build && just obril-build && turnt {{args}} test/**/*.bril
 
-# use brilz or brilo
+# use brilz or obril
 @graphviz exe bril-file:
     just {{exe}}-file {{bril-file}} --graphviz | dot -Tpdf -o scratch/cfg.pdf && evince scratch/cfg.pdf
 
 # round trip to test conversion of bril.Program to basic blocks and back.
 # jq sorts keys with `-S`
 # Can be used like `find bril bril/test/interp/core --exec just roundtrip`
-# Be careful with brilo, as odin compiles from scratch every time, so need to set
+# Be careful with obril, as odin compiles from scratch every time, so need to set
 # threads to 1 by `find -j=1`
 # TODO put this into test suite
 @roundtrip exe bril-file:
@@ -52,7 +52,7 @@
 
 # Utils
 
-# Used for brilo, as there doesn't appear to be a way
+# Used for obril, as there doesn't appear to be a way
 # to print json w/out nulls.
 @clean-nulls *args="":
     #jq {{args}} 'del(..|nulls)'

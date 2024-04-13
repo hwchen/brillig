@@ -1,4 +1,4 @@
-package brilo
+package obril
 
 import "core:fmt"
 
