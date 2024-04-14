@@ -183,11 +183,11 @@
         "zls-flake": "zls-flake"
       },
       "locked": {
-        "lastModified": 1712956450,
-        "narHash": "sha256-Sq1doDV5QTNX6LIIq+Ahz7TxDp3dP4AGMD4UqlRU4uQ=",
+        "lastModified": 1713087298,
+        "narHash": "sha256-asbqvIMBv9dSJu3cdhYArb9HWFsCw8qDxSOZ8OVtwWE=",
         "owner": "hwchen",
         "repo": "picogron",
-        "rev": "cf34566b7022d34a39fd425cae0ae5c6ce8c6320",
+        "rev": "8aec0e29d2ec58a3fd0ffd30643ec6db831afcea",
         "type": "github"
       },
       "original": {
