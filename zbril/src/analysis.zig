@@ -6,9 +6,9 @@ const ArrayList = std.ArrayList;
 const StringMap = std.json.ArrayHashMap; // Needed to get json serialization
 
 const bril = @import("bril.zig");
-
-// To make sure that block index labels are always formatted the same.
-const BLOCK_INDEX_LABEL_FORMAT = "{d}";
+const util = @import("util.zig");
+const IntStringMap = util.IntStringMap;
+const LABEL_FMT = util.BLOCK_INDEX_LABEL_FORMAT;
 
 const Block = []bril.Instruction;
 const BasicBlocks = struct {
@@ -21,23 +21,6 @@ const BasicBlocks = struct {
     name: []const u8,
     args: ?[]const bril.FunctionArg = null,
     type: ?bril.Type = null,
-
-    // thin wrapper, to make it serializable to json
-    const IntStringMap = struct {
-        map: std.AutoHashMapUnmanaged(usize, []const u8) = std.AutoHashMapUnmanaged(usize, []const u8){},
-
-        pub fn jsonStringify(self: @This(), jws: anytype) !void {
-            var buf: [32]u8 = undefined; //32 chars should be plenty for numeric label?
-            try jws.beginObject();
-            var it = self.map.iterator();
-            while (it.next()) |kv| {
-                const k = try fmt.bufPrint(&buf, BLOCK_INDEX_LABEL_FORMAT, .{kv.key_ptr.*});
-                try jws.objectField(k);
-                try jws.write(kv.value_ptr.*);
-            }
-            try jws.endObject();
-        }
-    };
 
     pub fn toBril(bb: BasicBlocks, alloc: Allocator) !bril.Function {
         var instrs = ArrayList(bril.Code).init(alloc);
@@ -69,7 +52,7 @@ pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !ProgramBasicBloc
     var fbb = StringMap(BasicBlocks){};
     for (program.functions) |func| {
         var blocks = ArrayList(Block).init(alloc);
-        var blk_to_lbl = BasicBlocks.IntStringMap{};
+        var blk_to_lbl = IntStringMap{};
         var lbl_to_blk = StringMap(usize){};
         var block = ArrayList(bril.Instruction).init(alloc);
         for (func.instrs, 0..) |code, code_idx| {
@@ -125,7 +108,7 @@ pub fn controlFlowGraph(pbb: ProgramBasicBlocks, alloc: Allocator) !ProgramContr
         const blks = bb.blocks;
         for (blks, 0..) |blk, blk_idx| {
             const blk_lbl = bb.blk_to_lbl.map.get(blk_idx) orelse
-                try fmt.allocPrint(alloc, BLOCK_INDEX_LABEL_FORMAT, .{blk_idx});
+                try fmt.allocPrint(alloc, LABEL_FMT, .{blk_idx});
             const last_instr = blk[blk.len - 1];
             const succs = switch (last_instr.op) {
                 .jmp, .br => last_instr.labels.?,
@@ -133,7 +116,7 @@ pub fn controlFlowGraph(pbb: ProgramBasicBlocks, alloc: Allocator) !ProgramContr
                 else => if (blk_idx < blks.len - 1) blk: {
                     // is not the last block
                     const lbl = bb.blk_to_lbl.map.get(blk_idx + 1) orelse
-                        try fmt.allocPrint(alloc, BLOCK_INDEX_LABEL_FORMAT, .{blk_idx + 1});
+                        try fmt.allocPrint(alloc, LABEL_FMT, .{blk_idx + 1});
                     const out = try alloc.alloc([]const u8, 1);
                     out[0] = lbl;
                     break :blk out;
@@ -164,19 +147,17 @@ pub fn deadCodeEliminationGloballyUnused(pbb: *ProgramBasicBlocks, scratch_alloc
                 }
             }
             // Second loop over instrs, if instr destination not in `used`, delete instr
-            for (bb.blocks) |*b| {
-                var instrs = std.ArrayListUnmanaged(bril.Instruction).fromOwnedSlice(b.*);
-                var i = instrs.items.len;
+            for (bb.blocks) |*instrs| {
+                var i = instrs.len;
                 while (i > 0) {
                     i -= 1;
-                    if (instrs.items[i].dest) |dest| {
+                    if (instrs.*[i].dest) |dest| {
                         if (!used.contains(dest)) {
-                            _ = instrs.orderedRemove(i);
+                            util.orderedRemoveSlice(bril.Instruction, instrs, i);
                             converged = false;
                         }
                     }
                 }
-                b.* = instrs.items;
             }
         }
     }
@@ -184,14 +165,13 @@ pub fn deadCodeEliminationGloballyUnused(pbb: *ProgramBasicBlocks, scratch_alloc
 
 pub fn deadCodeEliminationLocallyKilled(pbb: *ProgramBasicBlocks, scratch_alloc: Allocator) !void {
     for (pbb.functions.map.values()) |bb| {
-        for (bb.blocks) |*b| {
+        for (bb.blocks) |*instrs| {
             var declared = std.StringHashMap(void).init(scratch_alloc);
             defer declared.deinit();
-            var instrs = std.ArrayListUnmanaged(bril.Instruction).fromOwnedSlice(b.*);
-            var i = instrs.items.len;
+            var i = instrs.len;
             while (i > 0) {
                 i -= 1;
-                const instr = instrs.items[i];
+                const instr = instrs.*[i];
                 if (instr.args) |args| {
                     for (args) |arg| {
                         _ = declared.remove(arg);
@@ -200,13 +180,12 @@ pub fn deadCodeEliminationLocallyKilled(pbb: *ProgramBasicBlocks, scratch_alloc:
 
                 if (instr.dest) |dest| {
                     if (declared.contains(dest)) {
-                        _ = instrs.orderedRemove(i);
+                        util.orderedRemoveSlice(bril.Instruction, instrs, i);
                     } else {
                         try declared.put(dest, {});
                     }
                 }
             }
-            b.* = instrs.items;
         }
     }
 }

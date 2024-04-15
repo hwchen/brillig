@@ -26,14 +26,12 @@ pub const Code = union(enum) {
 
     pub fn jsonParseFromValue(allocator: std.mem.Allocator, source: std.json.Value, options: std.json.ParseOptions) !@This() {
         switch (source) {
-            .object => |object| {
-                if (object.contains("label")) {
-                    const label = try std.json.innerParseFromValue(Label, allocator, source, options);
-                    return Code{ .label = label };
-                } else {
-                    const instr = try std.json.innerParseFromValue(Instruction, allocator, source, options);
-                    return Code{ .instruction = instr };
-                }
+            .object => |object| if (object.contains("label")) {
+                const label = try std.json.innerParseFromValue(Label, allocator, source, options);
+                return Code{ .label = label };
+            } else {
+                const instr = try std.json.innerParseFromValue(Instruction, allocator, source, options);
+                return Code{ .instruction = instr };
             },
             else => return error.UnexpectedToken,
         }
