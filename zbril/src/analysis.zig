@@ -22,10 +22,15 @@ const BasicBlocks = struct {
     args: ?[]const bril.FunctionArg = null,
     type: ?bril.Type = null,
 
+    // Returns label for block, if it's labeled.
+    pub fn block_label(self: BasicBlocks, idx: usize) ?[]const u8 {
+        return self.blk_to_lbl.map.get(idx);
+    }
+
     pub fn toBril(bb: BasicBlocks, alloc: Allocator) !bril.Function {
         var instrs = ArrayList(bril.Code).init(alloc);
         for (bb.blocks, 0..) |block, blk_idx| {
-            if (bb.blk_to_lbl.map.get(blk_idx)) |label| {
+            if (bb.block_label(blk_idx)) |label| {
                 try instrs.append(.{ .label = .{ .label = label } });
             }
             for (block) |instr| {
@@ -97,7 +102,7 @@ pub fn genBasicBlocks(program: bril.Program, alloc: Allocator) !ProgramBasicBloc
     return ProgramBasicBlocks{ .functions = fbb };
 }
 
-pub const ControlFlowGraph = StringMap([]const []const u8);
+pub const ControlFlowGraph = StringMap([][]const u8);
 pub const ProgramControlFlowGraph = StringMap(ControlFlowGraph);
 
 pub fn controlFlowGraph(pbb: ProgramBasicBlocks, alloc: Allocator) !ProgramControlFlowGraph {
@@ -105,22 +110,19 @@ pub fn controlFlowGraph(pbb: ProgramBasicBlocks, alloc: Allocator) !ProgramContr
     const fnbb = pbb.functions.map;
     for (fnbb.values()) |bb| {
         var cfg = ControlFlowGraph{};
-        const blks = bb.blocks;
-        for (blks, 0..) |blk, blk_idx| {
-            const blk_lbl = bb.blk_to_lbl.map.get(blk_idx) orelse
-                try fmt.allocPrint(alloc, LABEL_FMT, .{blk_idx});
+        for (bb.blocks, 0..) |blk, blk_idx| {
+            const blk_lbl = bb.block_label(blk_idx) orelse try fmt.allocPrint(alloc, LABEL_FMT, .{blk_idx});
             const last_instr = blk[blk.len - 1];
-            const succs = switch (last_instr.op) {
+            const succs: [][]const u8 = switch (last_instr.op) {
                 .jmp, .br => last_instr.labels.?,
-                .ret => @as([]const []const u8, &.{}),
-                else => if (blk_idx < blks.len - 1) blk: {
+                .ret => &.{},
+                else => if (blk_idx < bb.blocks.len - 1) blk: {
                     // is not the last block
-                    const lbl = bb.blk_to_lbl.map.get(blk_idx + 1) orelse
-                        try fmt.allocPrint(alloc, LABEL_FMT, .{blk_idx + 1});
+                    const lbl = bb.block_label(blk_idx + 1) orelse try fmt.allocPrint(alloc, LABEL_FMT, .{blk_idx + 1});
                     const out = try alloc.alloc([]const u8, 1);
                     out[0] = lbl;
                     break :blk out;
-                } else @as([]const []const u8, &.{}),
+                } else &.{},
             };
             try cfg.map.put(alloc, blk_lbl, succs);
         }

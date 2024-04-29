@@ -52,9 +52,9 @@ pub const Instruction = struct {
     op: Op,
     dest: ?[]const u8 = null,
     type: ?Type = null,
-    args: ?[]const []const u8 = null,
-    funcs: ?[]const []const u8 = null,
-    labels: ?[]const []const u8 = null,
+    args: ?[][]const u8 = null,
+    funcs: ?[][]const u8 = null,
+    labels: ?[][]const u8 = null,
     value: ?Value = null, // for Constant
 };
 
