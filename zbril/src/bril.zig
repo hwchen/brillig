@@ -1,4 +1,6 @@
 const std = @import("std");
+const json = std.json;
+const Allocator = std.mem.Allocator;
 
 pub const Program = struct {
     functions: []Function,
@@ -20,17 +22,17 @@ pub const Code = union(enum) {
     instruction: Instruction,
     label: Label,
 
-    pub fn jsonParse(allocator: std.mem.Allocator, source: anytype, options: std.json.ParseOptions) !@This() {
-        return try jsonParseFromValue(allocator, try std.json.innerParse(std.json.Value, allocator, source, options), options);
+    pub fn jsonParse(alloc: Allocator, source: anytype, options: json.ParseOptions) !@This() {
+        return try jsonParseFromValue(alloc, try json.innerParse(json.Value, alloc, source, options), options);
     }
 
-    pub fn jsonParseFromValue(allocator: std.mem.Allocator, source: std.json.Value, options: std.json.ParseOptions) !@This() {
+    pub fn jsonParseFromValue(alloc: Allocator, source: json.Value, options: json.ParseOptions) !@This() {
         switch (source) {
             .object => |object| if (object.contains("label")) {
-                const label = try std.json.innerParseFromValue(Label, allocator, source, options);
+                const label = try json.innerParseFromValue(Label, alloc, source, options);
                 return Code{ .label = label };
             } else {
-                const instr = try std.json.innerParseFromValue(Instruction, allocator, source, options);
+                const instr = try json.innerParseFromValue(Instruction, alloc, source, options);
                 return Code{ .instruction = instr };
             },
             else => return error.UnexpectedToken,
@@ -62,12 +64,12 @@ pub const Value = union(enum) {
     bool: bool,
     int: i64,
 
-    pub fn jsonParse(allocator: std.mem.Allocator, source: anytype, options: std.json.ParseOptions) !@This() {
-        return try jsonParseFromValue(allocator, try std.json.innerParse(std.json.Value, allocator, source, options), options);
+    pub fn jsonParse(alloc: Allocator, source: anytype, options: json.ParseOptions) !@This() {
+        return try jsonParseFromValue(alloc, try json.innerParse(json.Value, alloc, source, options), options);
     }
 
-    pub fn jsonParseFromValue(allocator: std.mem.Allocator, source: std.json.Value, options: std.json.ParseOptions) !@This() {
-        _ = allocator;
+    pub fn jsonParseFromValue(alloc: Allocator, source: json.Value, options: json.ParseOptions) !@This() {
+        _ = alloc;
         _ = options;
         switch (source) {
             .bool => |b| return Value{ .bool = b },
