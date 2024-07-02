@@ -28,6 +28,12 @@
 @test *args="":
     just zbril-build && just obril-build && turnt {{args}} test/**/*.bril
 
+# -e for envs name
+# --save
+# --diff
+@test-path glob-path *args="":
+    just zbril-build && just obril-build && turnt {{args}} {{glob-path}}
+
 # use zbril or obril
 @graphviz exe bril-file:
     just {{exe}}-file {{bril-file}} --graphviz | dot -Tpdf -o scratch/cfg.pdf && evince scratch/cfg.pdf

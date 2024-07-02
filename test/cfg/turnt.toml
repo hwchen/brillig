@@ -1,5 +1,5 @@
 [envs.zbril]
-command = "cat {filename} | bril2json | just zbril --control-flow-graph | jq -Sc"
+command = "cat {filename} | bril2json | ../../zbril/zig-out/bin/zbril --control-flow-graph | jq -Sc"
 
 [envs.obril]
-command = "cat {filename} | bril2json | just obril --control-flow-graph | jq -Sc"
+command = "cat {filename} | bril2json | ../../obril.bin --control-flow-graph | just clean-nulls | jq -Sc"

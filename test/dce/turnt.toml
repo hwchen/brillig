@@ -1,5 +1,5 @@
 [envs.zbril]
-command = "cat {filename} | bril2json | just zbril --dead-code-elimination | bril2txt"
+command = "cat {filename} | bril2json | ../../zbril/zig-out/bin/zbril --dead-code-elimination | bril2txt"
 
 [envs.obril]
-command = "cat {filename} | bril2json | just obril --dead-code-elimination | bril2txt"
+command = "cat {filename} | bril2json | ../../obril.bin --dead-code-elimination | just clean-nulls |bril2txt"
