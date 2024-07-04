@@ -1,4 +1,3 @@
-# Language-specific commands
 @obril-build:
     odin build obril
 
@@ -11,22 +10,32 @@
 @obril-file bril-file *args="":
     cat {{bril-file}} | bril2json | just obril {{args}}
 
-@zbril-build:
-    cd zbril && zig build
-
-@zbril *args="":
-    just zbril-build && ./zbril/zig-out/bin/zbril {{args}}
-
-@zbril-file bril-file *args="":
-    cat {{bril-file}} | bril2json | just zbril {{args}}
-
 # None-language-specific commands
+
+@turnt *args="":
+    #! /usr/bin/env bash
+    echo "building..."
+    just obril-build
+    echo "testing..."
+    time turnt {{args}} test/**/*.bril --env obril -j
 
 # -e for envs name
 # --save
 # --diff
-@test *args="":
-    just zbril-build && just obril-build && turnt {{args}} test/**/*.bril
+test:
+    #! /usr/bin/env bash
+    echo "building..."
+    just obril-build
+    echo "testing..."
+    time $(fd . -e bril test/cfg --exec just test-one-json {} --control-flow-graph && \
+        fd . -e bril test/dce --exec just test-one-bril {} --dead-code-elimination)
+
+
+@test-one-json file *args="":
+     diff <(cat {{file}} | bril2json | ./obril.bin {{args}} | just clean-nulls | jq -Sc) {{without_extension(file)}}.out
+
+@test-one-bril file *args="":
+     diff <(cat {{file}} | bril2json | ./obril.bin {{args}} | just clean-nulls | bril2txt) {{without_extension(file)}}.out
 
 # -e for envs name
 # --save
@@ -63,4 +72,15 @@
 @clean-nulls *args="":
     #jq {{args}} 'del(..|nulls)'
     picogron | rg -v null | picogron -u
+
+# zbril section, not really maintained
+
+@zbril-build:
+    cd zbril && zig build
+
+@zbril *args="":
+    just zbril-build && ./zbril/zig-out/bin/zbril {{args}}
+
+@zbril-file bril-file *args="":
+    cat {{bril-file}} | bril2json | just zbril {{args}}
 
