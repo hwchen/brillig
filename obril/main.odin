@@ -11,8 +11,17 @@ main :: proc() {
 
     cli_opts := parse_cli()
 
+    rdr: bufio.Reader
+    rdr_buf: [4096 * 8]u8
+    bufio.reader_init_with_buf(&rdr, os.stream_from_handle(os.stdin), rdr_buf[:])
+
     buf: [4096]u8
-    bytes_read, _ := os.read(os.stdin, buf[:])
+    bytes_read := 0
+    for bytes_read < len(buf) {
+        n_bytes, _ := bufio.reader_read(&rdr, buf[bytes_read:])
+        if n_bytes == 0 do break
+        bytes_read += n_bytes
+    }
 
     program_in: Program
     _jinerr := json.unmarshal(buf[:bytes_read], &program_in)

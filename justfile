@@ -19,7 +19,7 @@
 @zbril-file bril-file *args="":
     cat {{bril-file}} | bril2json | just zbril {{args}}
 
-@turnt *args="":
+turnt *args="":
     #! /usr/bin/env bash
     echo "building..."
     just obril-build
