@@ -122,6 +122,9 @@
         # for brili executable
         PATH = "/home/hwchen/.deno/bin:$PATH";
 
+        # because odin error messages don't pick up light theme
+        NO_COLOR=true;
+
         # If needed I can define a postShellHook here.
       };
     });
