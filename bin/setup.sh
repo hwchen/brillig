@@ -7,6 +7,10 @@ set -euo pipefail
 # May need to clear .venv first (rm, and then allow nix venv shell hook to reapply)
 
 # Install bril2txt and bril2json
-pip install flit
-cd bril/bril-txt
-flit install --symlink
+cd bril/bril-rs
+make install
+
+# python versions, were too slow in tests
+#pip install flit
+#cd bril/bril-txt
+#flit install --symlink

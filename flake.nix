@@ -79,12 +79,15 @@
         zls = zls-flake.packages.${system}.zls;
         picogron = picogron-flake.packages.${system}.picogron;
 
-        venvDir = "./.venv";
+        # No longer used, as bril2json and bril2txt no longer used,
+        # but kept around just in case I need to set up other python
+        # deps
+        #venvDir = "./.venv";
 
         lib = pkgs.lib;
         in {
         devShells.default = pkgs.mkShell {
-        inherit venvDir;
+        #inherit venvDir;
         nativeBuildInputs = [
         pkgs.zigpkgs.master-2024-03-16
         zls
@@ -95,6 +98,10 @@
         # for brili, check ~/.deno/bin when removing.
         # install brili by deno install brili.ts
         pkgs.deno
+
+        # No longer used, as bril2json and bril2txt no longer used,
+        # but kept around just in case I need to set up other python
+        # deps
         # bril2json and bril2txt
         # requires
         # ```
@@ -102,10 +109,10 @@
         # cd <bril-txt dir>
         # flit install --symlink
         # ```
-        pkgs.python311
-        # Just using venv, install everything by pip for python.
+        #pkgs.python311
+        # Just using venv, install everything by pip for python for bril2json and bril2txt
         # https://www.reddit.com/r/NixOS/comments/q71v0e/what_is_the_correct_way_to_setup_pip_with_nix_to/
-        pkgs.python311Packages.venvShellHook
+        #pkgs.python311Packages.venvShellHook
 
         pkgs.graphviz
         pkgs.python311Packages.turnt # for testing
