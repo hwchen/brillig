@@ -2,7 +2,7 @@ Uses submodules to track bril for dependencies `brili` and `bril2json` and `bril
 
 Nix sets up a venv for the python utils.
 
-`./bin/setup.sh` should be called to set up a existing venv. This can mean either a fresh clone, or `rm -r .venv` and applying the flake again (this is necessary when moving the dir, as the paths related to the venv get messed up).
+`./bin/setup.sh` should be called to set up bril2json and bril2txt. Unfortunately they are installed to local rust/cargo folders instead of a project .venv, but the python versions were too slow.
 
 ## quickstart
 
