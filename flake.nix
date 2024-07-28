@@ -50,7 +50,7 @@
         devShells.default = pkgs.mkShell {
         #inherit venvDir;
         nativeBuildInputs = [
-        pkgs.zigpkgs.master-2024-03-16
+        pkgs.zigpkgs.master-2024-07-26
         zls
 
         pkgs.odin
