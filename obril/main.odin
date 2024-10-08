@@ -2,6 +2,7 @@ package obril
 
 import "core:bufio"
 import "core:encoding/json"
+import "core:flags"
 import "core:fmt"
 import "core:log"
 import "core:os"
@@ -9,7 +10,8 @@ import "core:os"
 main :: proc() {
 	context.logger = log.create_console_logger(.Info)
 
-	cli_opts := parse_cli()
+	cli_opts: CliOpts
+	flags.parse_or_exit(&cli_opts, os.args, style = .Unix)
 
 	rdr: bufio.Reader
 	rdr_buf: [4096 * 8]u8
@@ -29,19 +31,19 @@ main :: proc() {
 	bb := bril2basic_blocks(program_in)
 
 	// unoptimized
-	if cli_opts.unoptimized != 0 {
+	if cli_opts.unoptimized {
 		program_out := basic_blocks2bril(bb)
 		write_json(program_out)
 	}
 
 	cfg := basic_blocks2control_flow_graph(bb)
-	if cli_opts.control_flow_graph != 0 {
+	if cli_opts.control_flow_graph {
 		write_json(cfg)
 	}
 
 	dead_code_elimination_globally_unused(&bb)
 	dead_code_elimination_locally_killed(&bb)
-	if cli_opts.dead_code_elimination != 0 {
+	if cli_opts.dead_code_elimination {
 		out := basic_blocks2bril(bb)
 		write_json(out)
 	}
@@ -53,21 +55,7 @@ write_json :: proc(val: any) {
 }
 
 CliOpts :: struct {
-	unoptimized:           u8,
-	control_flow_graph:    u8,
-	dead_code_elimination: u8,
-}
-
-parse_cli :: proc() -> CliOpts {
-	out: CliOpts
-	for arg in os.args[1:] {
-		if arg == "--unoptimized" {
-			out.unoptimized += 1
-		} else if arg == "--control-flow-graph" {
-			out.control_flow_graph += 1
-		} else if arg == "--dead-code-elimination" {
-			out.dead_code_elimination += 1
-		}
-	}
-	return out
+	unoptimized:           bool `usage:"Unoptimized output"`,
+	control_flow_graph:    bool `usage:"Control flow graph"`,
+	dead_code_elimination: bool `usage:"Dead code elimination"`,
 }
