@@ -15,8 +15,7 @@
         in {
         devShells.default = pkgs.mkShell {
         nativeBuildInputs = [
-        pkgs.odin
-        pkgs.ols
+        # odin/ols not managed by nix
 
         # for brili, check ~/.deno/bin when removing.
         # install brili by deno install brili.ts
