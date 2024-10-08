@@ -54,11 +54,3 @@ turnt *args="":
 
 @brili *args="":
     deno run bril/brili.ts {{args}}
-
-# Utils
-
-# Used for obril, as there doesn't appear to be a way
-# to print json w/out nulls.
-@clean-nulls *args="":
-    #jq {{args}} 'del(..|nulls)'
-    picogron | rg -v null | picogron -u

@@ -18,17 +18,9 @@
         zig-overlay.follows = "zig-overlay";
       };
     };
-
-    picogron-flake = {
-      url = "github:hwchen/picogron";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        zig-overlay.follows = "zig-overlay";
-      };
-    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, zig-overlay, zls-flake, picogron-flake }:
+  outputs = { self, nixpkgs, flake-utils, zig-overlay, zls-flake }:
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = import nixpkgs {
         inherit system;
@@ -38,7 +30,6 @@
         };
 
         zls = zls-flake.packages.${system}.zls;
-        picogron = picogron-flake.packages.${system}.picogron;
 
         # No longer used, as bril2json and bril2txt no longer used,
         # but kept around just in case I need to set up other python
@@ -78,7 +69,6 @@
         pkgs.graphviz
         pkgs.python311Packages.turnt # for testing
         pkgs.jq # for sorting keys and pretty-printing output
-        picogron # also for working with json
         ];
         # for brili executable
         PATH = "/home/hwchen/.deno/bin:$PATH";
