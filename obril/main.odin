@@ -30,7 +30,6 @@ main :: proc() {
 
 	bb := bril2basic_blocks(program_in)
 
-	// unoptimized
 	if cli_opts.unoptimized {
 		program_out := basic_blocks2bril(bb)
 		write_json(program_out)
