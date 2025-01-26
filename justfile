@@ -5,10 +5,6 @@
     cat {{bril-file}} | bril2json | {{bin}} {{args}}
 
 turnt bin *args="":
-    #! /usr/bin/env bash
-    echo "building..."
-    just build
-    echo "testing..."
     time turnt {{args}} --args={{bin}} test/**/*.bril -j
 
 # -e for envs name
