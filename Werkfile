@@ -1,0 +1,30 @@
+config default = "build"
+
+let profile = "debug"
+
+# Pick cflags based on the build profile
+let cflags = profile | match {
+    "debug" => ["-o:minimal", "-debug"]
+    "release" => ["-o:speed"]
+    "asan-address" => ["-o:minimal", "-debug", "--sanitize=address"]
+    "%" => ""
+}
+
+build "obril" {
+    from glob "obril/*.odin"
+    run "odin build <in:dir,dedup,workspace> {cflags*} -out:<out:out-dir>"
+}
+
+task build {
+    build "obril"
+}
+
+# `werk test -Dturnt-args=-v`
+# --save
+# --diff
+let turnt-args = ""
+task test {
+    build "obril"
+    let test_inputs = glob "test/**/*.bril"
+    run "time turnt {turnt-args} -j <test_inputs*>"
+}

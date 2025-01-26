@@ -2,10 +2,10 @@
 .direnv
 .venv
 
-
 scratch
 .zig-cache
 zig-out
 *.pdf
 
 *.bin
+target
