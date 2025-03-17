@@ -4,27 +4,56 @@ let profile = "debug"
 
 # Pick cflags based on the build profile
 let cflags = profile | match {
-    "debug" => ["-o:minimal", "-debug"]
-    "release" => ["-o:speed"]
-    "asan-address" => ["-o:minimal", "-debug", "--sanitize=address"]
+    "debug" => ["-O0"]
+    "release" => ["-O3"]
+    "asan-address" => ["-O0", "--sanitize=address"]
     "%" => ""
 }
 
-build "obril" {
-    from glob "obril/*.odin"
-    run "odin build <in:dir,dedup,workspace> {cflags*} -out:<out:out-dir>"
+build "cbril" {
+    #from glob "cbril/*.c3"
+    from [
+        "cbril/main.c3",
+        "cbril/bril.c3",
+        "cbril/util.c3",
+        "libs/json-c3/json.c3",
+        "libs/json-c3/deserialize.c3",
+        "libs/json-c3/serialize.c3",
+        "libs/json-c3/lex.c3",
+    ]
+    run "c3c compile {cflags*} <in*> -o <out:out-dir>"
+}
+
+build "testrun" {
+    #from glob "cbril/*.c3"
+    from [
+        "cbril/main.c3",
+        "cbril/bril.c3",
+        "cbril/util.c3",
+        "libs/json-c3/json.c3",
+        "libs/json-c3/deserialize.c3",
+        "libs/json-c3/serialize.c3",
+        "libs/json-c3/lex.c3",
+    ]
+    run "c3c compile-test --suppress-run {cflags*} <in*> -o <out:out-dir>"
 }
 
 task build {
-    build "obril"
+    build "cbril"
+}
+
+task test {
+    let test_exe = "testrun"
+    build test_exe
+    run "<test_exe>"
 }
 
 # `werk test -Dturnt-args=-v`
 # --save
 # --diff
 let turnt-args = ""
-task test {
-    build "obril"
+task turnt {
+    build "cbril"
     let test_inputs = glob "test/**/*.bril"
     run "time turnt {turnt-args} -j <test_inputs*>"
 }
