@@ -1,3 +1,9 @@
 [submodule "bril"]
 	path = bril
 	url = git@github.com:sampsyo/bril
+[submodule "libs/json-c3"]
+	path = libs/json-c3
+	url = git@github.com:hwchen/json-c3
+[submodule "libs/opter-c3"]
+	path = libs/opter-c3
+	url = git@github.com:hwchen/opter-c3
