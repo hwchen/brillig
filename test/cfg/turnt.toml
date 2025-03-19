@@ -1,1 +1,1 @@
-command = "cat {filename} | bril2json | ../../target/obril --control-flow-graph | jq -Sc"
+command = "cat {filename} | bril2json | ../../target/cbril --control-flow-graph | jq -Sc"

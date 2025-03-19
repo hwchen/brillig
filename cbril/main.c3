@@ -43,10 +43,10 @@ fn int main(String[] args) {
 		write_json(program_out)!!;
 	}
 
-	//cfg := basic_blocks2control_flow_graph(bb)
-	//if cli_opts.control_flow_graph {
-	//	write_json(cfg)
-	//}
+	ProgramControlFlowGraph cfg = analysis::basic_blocks2control_flow_graph(tmem(), bb);
+	if (cli_opts.control_flow_graph) {
+		write_json(cfg)!!;
+	}
 
 	//dead_code_elimination_globally_unused(&bb)
 	//dead_code_elimination_locally_killed(&bb)
@@ -57,7 +57,7 @@ fn int main(String[] args) {
 	return 0;
 }
 
-fn void? write_json(Program program_out) {
+macro void? write_json(program_out) {
 	String? out_json = json::to_json(program_out, tmem());
 	if (catch err = out_json) {
 		io::eprintfn("Error serializing program: %s", err);

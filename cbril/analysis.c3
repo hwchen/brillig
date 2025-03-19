@@ -1,5 +1,6 @@
 module cbril::analysis;
 import std::collections;
+import std::core::string;
 import cbril::bril;
 
 const String BLOCK_INDEX_LABEL_FORMAT = "%d";
@@ -24,11 +25,11 @@ struct ProgramBasicBlocks {
 
 fn Program basic_blocks2bril(Allocator alloc, ProgramBasicBlocks pbb) {
 	List{Function} fns;
-	@pool(alloc) {
+	@pool() {
 		fns.tinit();
 		foreach (bb : pbb.functions) {
 			List{Instruction} instrs;
-			@pool(alloc) {
+			@pool() {
 				instrs.tinit();
 				foreach (blk_idx, block : bb.blocks) {
 					if (try label = bb.blk_to_lbl.get(blk_idx)) {
@@ -47,13 +48,15 @@ fn Program basic_blocks2bril(Allocator alloc, ProgramBasicBlocks pbb) {
 
 fn ProgramBasicBlocks bril2basic_blocks(Allocator alloc, Program program) {
 	List{BasicBlocks} fbb;
-	@pool(alloc) {
+	@pool() {
 		fbb.tinit();
 		foreach (func : program.functions) {
 			List{Block} blocks;
 			blocks.tinit();
 			HashMap{usz,String} blk_to_lbl;
+			blk_to_lbl.init(alloc);
 			HashMap{String,usz} lbl_to_blk;
+			lbl_to_blk.init(alloc);
 			List {Instruction} block;
 			block.tinit();
 			foreach (instr_idx, instr : func.instrs) {
@@ -93,44 +96,45 @@ fn ProgramBasicBlocks bril2basic_blocks(Allocator alloc, Program program) {
 	};
 }
 
-//ControlFlowGraph :: map[string][]string
-//ProgramControlFlowGraph :: map[string]ControlFlowGraph
-//
-//basic_blocks2control_flow_graph :: proc(pbb: ProgramBasicBlocks) -> ProgramControlFlowGraph {
-//	pcfg: ProgramControlFlowGraph
-//	for bb in pbb.functions {
-//		cfg: ControlFlowGraph
-//		blks := bb.blocks
-//		for blk, blk_idx in blks {
-//			blk_lbl :=
-//				bb.blk_to_lbl[blk_idx] or_else fmt.aprintf(BLOCK_INDEX_LABEL_FORMAT, blk_idx)
-//			last_instr := blk[len(blk) - 1]
-//			succs: []string
-//			switch last_instr.op {
-//			case .jmp, .br:
-//				succs = last_instr.labels.?
-//			case .ret:
-//				succs = {}
-//			case:
-//				if (blk_idx < len(blks) - 1) {
-//					// is not the last block
-//					lbl :=
-//						bb.blk_to_lbl[blk_idx + 1] or_else fmt.aprintf(
-//							BLOCK_INDEX_LABEL_FORMAT,
-//							blk_idx + 1,
-//						)
-//					out := make([]string, 1)
-//					out[0] = lbl
-//					succs = out
-//				} else {succs = {}}
-//			}
-//			cfg[blk_lbl] = succs
-//		}
-//		pcfg[bb.name] = cfg
-//	}
-//	return pcfg
-//}
-//
+alias ControlFlowGraph = HashMap{String,String[]};
+alias ProgramControlFlowGraph = HashMap{String,ControlFlowGraph};
+
+fn ProgramControlFlowGraph basic_blocks2control_flow_graph(Allocator alloc, ProgramBasicBlocks pbb) {
+	ProgramControlFlowGraph pcfg;
+	pcfg.init(alloc);
+	foreach (bb : pbb.functions) {
+		ControlFlowGraph cfg;
+		cfg.init(alloc);
+		Block[] blks = bb.blocks;
+		foreach (blk_idx, blk : blks) {
+			String blk_lbl = bb.blk_to_lbl[blk_idx] ?? string::tformat(BLOCK_INDEX_LABEL_FORMAT, blk_idx);
+			Instruction last_instr = blk[^1];
+			String[] succs;
+			switch (last_instr.op.get()!!) {
+			case JMP:
+			case BR:
+				succs = last_instr.labels.get()!!;
+			case RET:
+				succs = {};
+			default:
+				if (blk_idx < blks.len - 1) {
+					// is not the last block
+					String lbl = bb.blk_to_lbl[blk_idx + 1] ??
+						string::tformat(BLOCK_INDEX_LABEL_FORMAT, blk_idx + 1);
+					String[] out = allocator::new_array(alloc, String, 1);
+					out[0] = lbl;
+					succs = out;
+				} else {
+					succs = {};
+				}
+			}
+			cfg[blk_lbl] = succs;
+		}
+		pcfg[bb.name] = cfg;
+	}
+	return pcfg;
+}
+
 //// Currently operations on basic blocks are mutable.
 //// Since size of slices only decrease, shouldn't have to allocate.
 //dead_code_elimination_globally_unused :: proc(pbb: ^ProgramBasicBlocks) {
