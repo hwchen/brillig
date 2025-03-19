@@ -1,1 +1,1 @@
-command = "cat {filename} | bril2json | ../../target/obril --dead-code-elimination | bril2txt"
+command = "cat {filename} | bril2json | ../../target/cbril --dead-code-elimination | bril2txt"

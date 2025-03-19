@@ -48,12 +48,12 @@ fn int main(String[] args) {
 		write_json(cfg)!!;
 	}
 
-	//dead_code_elimination_globally_unused(&bb)
-	//dead_code_elimination_locally_killed(&bb)
-	//if cli_opts.dead_code_elimination {
-	//	out := basic_blocks2bril(bb)
-	//	write_json(out)
-	//}
+	analysis::dead_code_elimination_globally_unused(&bb);
+	analysis::dead_code_elimination_locally_killed(&bb);
+	if (cli_opts.dead_code_elimination) {
+		Program out = analysis::basic_blocks2bril(tmem(), bb);
+		write_json(out)!!;
+	}
 	return 0;
 }
 

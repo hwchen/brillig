@@ -27,15 +27,8 @@ build "cbril" {
 }
 
 build "testrun" {
-    #from glob "cbril/*.c3"
     from [
-        "cbril/main.c3",
-        "cbril/bril.c3",
         "cbril/util.c3",
-        "libs/json-c3/json.c3",
-        "libs/json-c3/deserialize.c3",
-        "libs/json-c3/serialize.c3",
-        "libs/json-c3/lex.c3",
     ]
     run "c3c compile-test --suppress-run {cflags*} <in*> -o <out:out-dir>"
 }
@@ -56,7 +49,6 @@ task test {
 let turnt-args = ""
 task turnt {
     build "cbril"
-    #let test_inputs = glob "test/**/*.bril"
-    let test_inputs = glob "test/cfg/*.bril"
+    let test_inputs = glob "test/**/*.bril"
     run "time turnt {turnt-args} -j <test_inputs*>"
 }

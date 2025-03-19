@@ -2,6 +2,7 @@ module cbril::analysis;
 import std::collections;
 import std::core::string;
 import cbril::bril;
+import cbril::util;
 
 const String BLOCK_INDEX_LABEL_FORMAT = "%d";
 
@@ -135,64 +136,68 @@ fn ProgramControlFlowGraph basic_blocks2control_flow_graph(Allocator alloc, Prog
 	return pcfg;
 }
 
-//// Currently operations on basic blocks are mutable.
-//// Since size of slices only decrease, shouldn't have to allocate.
-//dead_code_elimination_globally_unused :: proc(pbb: ^ProgramBasicBlocks) {
-//	for bb in pbb.functions {
-//		converged := false
-//		for !converged {
-//			converged = true
-//			used := make(map[string]struct {}, allocator = context.temp_allocator)
-//			defer free_all(context.temp_allocator)
-//			// First loop over all instrs, to collect set of used args
-//			for b in bb.blocks {
-//				for instr in b {
-//					if args, aok := instr.args.?; aok {
-//						for arg in args {
-//							used[arg] = {}
-//						}
-//					}
-//				}
-//			}
-//			// Second loop over instrs, if instr destination not in `used`, delete instr
-//			for &instrs in bb.blocks {
-//				i := len(instrs)
-//				for i > 0 {
-//					i -= 1
-//					if dest, dok := instrs[i].dest.?; dok {
-//						if !(dest in used) {
-//							ordered_remove_slice(&instrs, i)
-//							converged = false
-//						}
-//					}
-//				}
-//			}
-//		}
-//	}
-//}
-//
-//dead_code_elimination_locally_killed :: proc(pbb: ^ProgramBasicBlocks) {
-//	for bb in pbb.functions {
-//		for &instrs in bb.blocks {
-//			declared := make(map[string]struct {}, allocator = context.temp_allocator)
-//			defer free_all(context.temp_allocator)
-//			i := len(instrs)
-//			for i > 0 {
-//				i -= 1
-//				instr := instrs[i]
-//				if args, aok := instr.args.?; aok {
-//					for arg in args {
-//						delete_key(&declared, arg)
-//					}
-//				}
-//				if dest, dok := instr.dest.?; dok {
-//					if dest in declared {
-//						ordered_remove_slice(&instrs, i)
-//					} else {
-//						declared[dest] = {}
-//					}
-//				}
-//			}
-//		}
-//	}
-//}
+// Currently operations on basic blocks are mutable.
+// Since size of slices only decrease, shouldn't have to allocate.
+fn void dead_code_elimination_globally_unused(ProgramBasicBlocks* pbb) {
+	foreach (bb : pbb.functions) {
+		bool converged = false;
+		while (!converged) {
+			converged = true;
+			HashMap{String,char} used;
+			@pool() {
+				used.tinit();
+				// First loop over all instrs, to collect set of used args
+				foreach (b : bb.blocks) {
+					foreach (instr : b) {
+						if (try args = instr.args.get()) {
+							foreach (arg : args) {
+								used.set(arg, 0);
+							}
+						}
+					}
+				}
+				// Second loop over instrs, if instr destination not in `used`, delete instr
+				foreach (&instrs : bb.blocks) {
+					usz i = instrs.len;
+					while (i > 0) {
+						i -= 1;
+						if (try dest = (*instrs)[i].dest.get()) {
+							if (!used.has_key(dest)) {
+								util::ordered_remove_slice(&instrs, i);
+								converged = false;
+							}
+						}
+					}
+				}
+			};
+		}
+	}
+}
+
+fn void dead_code_elimination_locally_killed(ProgramBasicBlocks* pbb) {
+	foreach (bb : pbb.functions) {
+		foreach (&instrs : bb.blocks) {
+			HashMap{String, char} declared;
+			@pool() {
+				declared.tinit();
+				usz i = instrs.len;
+				while (i > 0) {
+					i -= 1;
+					Instruction instr = (*instrs)[i];
+					if (try args = instr.args.get()) {
+						foreach (arg : args) {
+							declared.remove(arg);
+						}
+					}
+					if (try dest = instr.dest.get()) {
+						if (declared.has_key(dest)) {
+							util::ordered_remove_slice(&instrs, i);
+						} else {
+							declared.set(dest, 0);
+						}
+					}
+				}
+			};
+		}
+	}
+}
