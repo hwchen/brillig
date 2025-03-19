@@ -163,7 +163,7 @@ fn void dead_code_elimination_globally_unused(ProgramBasicBlocks* pbb) {
 						i -= 1;
 						if (try dest = (*instrs)[i].dest.get()) {
 							if (!used.has_key(dest)) {
-								util::ordered_remove_slice(&instrs, i);
+								util::ordered_remove_slice(instrs, i);
 								converged = false;
 							}
 						}
@@ -191,7 +191,7 @@ fn void dead_code_elimination_locally_killed(ProgramBasicBlocks* pbb) {
 					}
 					if (try dest = instr.dest.get()) {
 						if (declared.has_key(dest)) {
-							util::ordered_remove_slice(&instrs, i);
+							util::ordered_remove_slice(instrs, i);
 						} else {
 							declared.set(dest, 0);
 						}
