@@ -15,11 +15,13 @@ build "cbril" {
     from [
         "cbril/main.c3",
         "cbril/bril.c3",
+        "cbril/analysis.c3",
         "cbril/util.c3",
         "libs/json-c3/json.c3",
         "libs/json-c3/deserialize.c3",
         "libs/json-c3/serialize.c3",
         "libs/json-c3/lex.c3",
+        "libs/opter-c3/opter.c3",
     ]
     run "c3c compile {cflags*} <in*> -o <out:out-dir>"
 }

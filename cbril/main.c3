@@ -1,13 +1,17 @@
 module cbril;
 import std::io;
-import bril;
 import json;
+import opter;
+
+import cbril::bril;
+import cbril::analysis;
 
 fn int main(String[] args) {
-	//context.logger = log.create_console_logger(.Info)
-
-	//cli_opts: CliOpts
-	//flags.parse_or_exit(&cli_opts, os.args, style = .Unix)
+	CliOpts cli_opts;
+	if (catch err = parse_cli(&cli_opts, args)) {
+		io::eprintfn("Cli error: %s", err);
+		return 1;
+	}
 
 	ReadBuffer rdr;
 	char[4096 * 8] rdr_buf;
@@ -26,24 +30,18 @@ fn int main(String[] args) {
 		bytes_read += n_bytes;
 	}
 
-	Program? program = json::from_str(Program, mem, (String)buf[:bytes_read]);
-	if (catch err = program) {
+	Program? program_in = json::from_str(Program, mem, (String)buf[:bytes_read]);
+	if (catch err = program_in) {
 		io::eprintfn("Error deserializing program: %s", err);
 		return 1;
 	}
-	String? out_json = json::to_json(program, tmem());
-	if (catch err = out_json) {
-		io::eprintfn("Error serializing program: %s", err);
-		return 1;
+
+	ProgramBasicBlocks bb = analysis::bril2basic_blocks(tmem(), program_in);
+
+	if (cli_opts.unoptimized) {
+		Program program_out = analysis::basic_blocks2bril(tmem(), bb);
+		write_json(program_out)!!;
 	}
-	io::printn(out_json);
-
-	//bb := bril2basic_blocks(program_in)
-
-	//if cli_opts.unoptimized {
-	//	program_out := basic_blocks2bril(bb)
-	//	write_json(program_out)
-	//}
 
 	//cfg := basic_blocks2control_flow_graph(bb)
 	//if cli_opts.control_flow_graph {
@@ -59,8 +57,36 @@ fn int main(String[] args) {
 	return 0;
 }
 
-//CliOpts :: struct {
-//	unoptimized:           bool `usage:"Unoptimized output"`,
-//	control_flow_graph:    bool `usage:"Control flow graph"`,
-//	dead_code_elimination: bool `usage:"Dead code elimination"`,
-//}
+fn void? write_json(Program program_out) {
+	String? out_json = json::to_json(program_out, tmem());
+	if (catch err = out_json) {
+		io::eprintfn("Error serializing program: %s", err);
+		return err?;
+	}
+	io::printn(out_json);
+}
+
+struct CliOpts {
+	bool unoptimized;
+	bool control_flow_graph;
+	bool dead_code_elimination;
+}
+
+fn void? parse_cli(CliOpts* opts, String[] args) {
+	Opter opter;
+	opter.init(args);
+
+	while (try arg = opter.next()) {
+		if (arg.type == EOF) break;
+		switch {
+			case arg.is(LONG, "unoptimized"):
+				opts.unoptimized = true;
+			case arg.is(LONG, "control-flow-graph"):
+				opts.control_flow_graph = true;
+			case arg.is(LONG, "dead-code-elimination"):
+				opts.dead_code_elimination = true;
+			default:
+				return opter.err_unexpected_arg();
+		}
+	}
+}

@@ -1,4 +1,4 @@
-module bril;
+module cbril::bril;
 import std::collections::maybe;
 import json;
 
