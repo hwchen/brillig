@@ -1,6 +1,6 @@
-config default = "build"
+default target = "build"
 
-let profile = "debug"
+config profile = "debug"
 
 # Pick cflags based on the build profile
 let cflags = profile | match {
