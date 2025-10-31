@@ -36,14 +36,14 @@ fn int main(String[] args) {
 		return 1;
 	}
 
-	ProgramBasicBlocks bb = analysis::bril2basic_blocks(tmem(), program_in);
+	ProgramBasicBlocks bb = analysis::bril2basic_blocks(tmem, program_in);
 
 	if (cli_opts.unoptimized) {
-		Program program_out = analysis::basic_blocks2bril(tmem(), bb);
+		Program program_out = analysis::basic_blocks2bril(tmem, bb);
 		write_json(program_out)!!;
 	}
 
-	ProgramControlFlowGraph cfg = analysis::basic_blocks2control_flow_graph(tmem(), bb);
+	ProgramControlFlowGraph cfg = analysis::basic_blocks2control_flow_graph(tmem, bb);
 	if (cli_opts.control_flow_graph) {
 		write_json(cfg)!!;
 	}
@@ -51,14 +51,14 @@ fn int main(String[] args) {
 	analysis::dead_code_elimination_globally_unused(&bb);
 	analysis::dead_code_elimination_locally_killed(&bb);
 	if (cli_opts.dead_code_elimination) {
-		Program out = analysis::basic_blocks2bril(tmem(), bb);
+		Program out = analysis::basic_blocks2bril(tmem, bb);
 		write_json(out)!!;
 	}
 	return 0;
 }
 
 macro void? write_json(program_out) {
-	String? out_json = json::to_json(program_out, tmem());
+	String? out_json = json::to_json(program_out, tmem);
 	if (catch err = out_json) {
 		io::eprintfn("Error serializing program: %s", err);
 		return err?;

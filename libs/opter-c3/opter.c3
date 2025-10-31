@@ -43,7 +43,7 @@ struct Opter {
 	String err_msg;
 }
 
-fn void Opter.init(&opter, String[] args, Allocator alloc = allocator::heap()) {
+fn void Opter.init(&opter, String[] args, Allocator alloc = mem) {
 	opter.args = args;
 	opter.idx_args = 1;
 	opter.idx_arg = 0;
