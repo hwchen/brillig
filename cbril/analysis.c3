@@ -18,13 +18,16 @@ struct BasicBlocks {
 	Maybe{FunctionArg[]} args;
 	Maybe{Type} type;
 }
-// For future lookups, not sure if we need a map of fn names to function blocks.
+// For future lookups, not sure if we need a map of fn names to fn blocks.
 // fn name is already carried inside `BasicBlocks`, perhaps that's enough.
 struct ProgramBasicBlocks {
 	BasicBlocks[] functions;
 }
 
-fn Program basic_blocks2bril(Allocator alloc, ProgramBasicBlocks pbb) => @pool() {
+fn Program basic_blocks2bril(
+	Allocator alloc,
+	ProgramBasicBlocks pbb,
+) => @pool() {
 	List{Function} fns;
 	fns.tinit();
 	foreach (bb : pbb.functions) @pool() {
@@ -38,12 +41,20 @@ fn Program basic_blocks2bril(Allocator alloc, ProgramBasicBlocks pbb) => @pool()
 				instrs.push(instr);
 			}
 		}
-		fns.push({ .name = bb.name, .args = bb.args, .type = bb.type, .instrs = instrs.to_array(alloc)});
+		fns.push({
+			.name = bb.name,
+			.args = bb.args,
+			.type = bb.type,
+			.instrs = instrs.to_array(alloc)
+		});
 	};
 	return { .functions = fns.to_array(alloc) };
 }
 
-fn ProgramBasicBlocks bril2basic_blocks(Allocator alloc, Program program) => @pool() {
+fn ProgramBasicBlocks bril2basic_blocks(
+	Allocator alloc,
+	Program program,
+) => @pool() {
 	List{BasicBlocks} fbb;
 	fbb.tinit();
 	foreach (func : program.functions) {
@@ -58,9 +69,11 @@ fn ProgramBasicBlocks bril2basic_blocks(Allocator alloc, Program program) => @po
 		foreach (instr_idx, instr : func.instrs) {
 			if (instr.is_label()) {
 				String label = instr.label.get()!!;
-				// if label comes after the first instruction, and if previous block ended in non-terminal
+				// If label comes after the first instruction,
+				// and if previous block ended in non-terminal,
 				// append the block before starting a new one.
-				// If it's the first instruction, or block before label ended in a terminal, the previous
+				// If it's the first instruction, or block before
+				// label ended in a terminal, the previous
 				// block will be empty.
 				if (instr_idx != 0 && block.len() != 0) {
 					blocks.push(block.to_array(alloc));
@@ -69,7 +82,8 @@ fn ProgramBasicBlocks bril2basic_blocks(Allocator alloc, Program program) => @po
 				blk_to_lbl.set(blocks.len(), label);
 				lbl_to_blk.set(label, blocks.len());
 			} else {
-				// Don't need to generate label for block, it's just the index in blocks
+				// Don't need to generate label for block, it's
+				// just the index in blocks
 				block.push(instr);
 				if (instr.op.get()!!.is_terminal()) {
 					blocks.push(block.to_array(alloc));
@@ -77,7 +91,8 @@ fn ProgramBasicBlocks bril2basic_blocks(Allocator alloc, Program program) => @po
 				}
 			}
 		}
-		// Don't append again if the last instruction was a terminal, which already appends block
+		// Don't append again if the last instruction was a terminal,
+		// which already appends block
 		if (block.len() != 0 ) blocks.push(block.to_array(alloc));
 		fbb.push((BasicBlocks){
 			.blocks = blocks.to_array(alloc),
@@ -94,7 +109,10 @@ fn ProgramBasicBlocks bril2basic_blocks(Allocator alloc, Program program) => @po
 alias ControlFlowGraph = HashMap{String,String[]};
 alias ProgramControlFlowGraph = HashMap{String,ControlFlowGraph};
 
-fn ProgramControlFlowGraph basic_blocks2control_flow_graph(Allocator alloc, ProgramBasicBlocks pbb) {
+fn ProgramControlFlowGraph basic_blocks2control_flow_graph(
+	Allocator alloc,
+	ProgramBasicBlocks pbb,
+) {
 	ProgramControlFlowGraph pcfg;
 	pcfg.init(alloc);
 	foreach (bb : pbb.functions) {
