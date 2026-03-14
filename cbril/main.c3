@@ -30,20 +30,20 @@ fn int main(String[] args) {
 		bytes_read += n_bytes;
 	}
 
-	Program? program_in = json::from_str(Program, mem, (String)buf[:bytes_read]);
-	if (catch err = program_in) {
+	Program? prog_in = json::from_str(Program, mem, (String)buf[:bytes_read]);
+	if (catch err = prog_in) {
 		io::eprintfn("Error deserializing program: %s", err);
 		return 1;
 	}
 
-	ProgramBasicBlocks bb = analysis::bril2basic_blocks(tmem, program_in);
+	ProgramBasicBlocks bb = analysis::bril2basic_blocks(tmem, prog_in);
 
 	if (cli_opts.unoptimized) {
-		Program program_out = analysis::basic_blocks2bril(tmem, bb);
-		write_json(program_out)!!;
+		Program out = analysis::basic_blocks2bril(tmem, bb);
+		write_json(out)!!;
 	}
 
-	ProgramControlFlowGraph cfg = analysis::basic_blocks2control_flow_graph(tmem, bb);
+	ControlFlowGraph cfg = analysis::basic_blocks2control_flow_graph(tmem, bb);
 	if (cli_opts.control_flow_graph) {
 		write_json(cfg)!!;
 	}

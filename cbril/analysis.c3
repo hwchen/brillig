@@ -107,13 +107,13 @@ fn ProgramBasicBlocks bril2basic_blocks(
 }
 
 alias ControlFlowGraph = HashMap{String,String[]};
-alias ProgramControlFlowGraph = HashMap{String,ControlFlowGraph};
+alias ControlFlowGraph = HashMap{String,ControlFlowGraph};
 
-fn ProgramControlFlowGraph basic_blocks2control_flow_graph(
+fn ControlFlowGraph basic_blocks2control_flow_graph(
 	Allocator alloc,
 	ProgramBasicBlocks pbb,
 ) {
-	ProgramControlFlowGraph pcfg;
+	ControlFlowGraph pcfg;
 	pcfg.init(alloc);
 	foreach (bb : pbb.functions) {
 		ControlFlowGraph cfg;
