@@ -30,7 +30,8 @@ fn int main(String[] args) {
 		bytes_read += n_bytes;
 	}
 
-	Program? prog_in = json::from_str(Program, mem, (String)buf[:bytes_read]);
+	String str_in = (String)buf[:bytes_read];
+	Program? prog_in = json::from_str(Program, mem, str_in);
 	if (catch err = prog_in) {
 		io::eprintfn("Error deserializing program: %s", err);
 		return 1;

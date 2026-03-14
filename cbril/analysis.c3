@@ -120,7 +120,8 @@ fn ControlFlowGraph basic_blocks2control_flow_graph(
 		cfg.init(alloc);
 		Block[] blks = bb.blocks;
 		foreach (blk_idx, blk : blks) {
-			String blk_lbl = bb.blk_to_lbl[blk_idx] ?? string::tformat(BLOCK_INDEX_LABEL_FORMAT, blk_idx);
+			String blk_lbl = bb.blk_to_lbl[blk_idx] ??
+				string::tformat(BLOCK_INDEX_LABEL_FORMAT, blk_idx);
 			Instruction last_instr = blk[^1];
 			String[] succs;
 			switch (last_instr.op.get()!!) {
@@ -167,7 +168,8 @@ fn void dead_code_elimination_globally_unused(ProgramBasicBlocks* pbb) {
 					}
 				}
 			}
-			// Second loop over instrs, if instr destination not in `used`, delete instr
+			// Second loop over instrs, if instr destination not in `used`,
+			// delete instr
 			foreach (&instrs : bb.blocks) {
 				usz i = instrs.len;
 				while (i > 0) {
