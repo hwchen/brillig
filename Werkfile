@@ -11,6 +11,7 @@ let cflags = profile | match {
 }
 
 build "cbril" {
+    capture false
     #from glob "cbril/*.c3"
     from [
         "cbril/main.c3",

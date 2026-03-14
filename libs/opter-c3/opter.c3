@@ -170,7 +170,7 @@ fn Value[]? Opter.values(&o, Allocator alloc = allocator::heap()) {
 faultdef OPTER_ERROR;
 
 // For use in error messages.
-fn String Opter.last_processed_arg(&o) @private {
+fn String Opter.last_processed_arg(&o) {
 	if (o.idx_arg == 0) {
 		return o.args[o.idx_args - 1];
 	} else {
@@ -178,22 +178,22 @@ fn String Opter.last_processed_arg(&o) @private {
 	}
 }
 
-fn void? Opter.err_custom_msg(&o, String m) @private {
+fn void? Opter.err_custom_msg(&o, String m) {
 	String arg = o.last_processed_arg();
 	DString msg;
 	msg.init(allocator: o.alloc);
 	msg.appendf("Error at \"%s\": %s", arg, m);
 	o.err_msg = msg.str_view();
-	return OPTER_ERROR?;
+	return OPTER_ERROR~;
 }
 
-fn void? Opter.err_missing_value(&o) @private {
+fn void? Opter.err_missing_value(&o) {
 	String arg = o.last_processed_arg();
 	DString msg;
 	msg.init(allocator: o.alloc);
 	msg.appendf("Missing value after argument \"%s\"", arg);
 	o.err_msg = msg.str_view();
-	return OPTER_ERROR?;
+	return OPTER_ERROR~;
 }
 
 // User should call this in default case when switching on `Arg arg = parser.next()!`
@@ -203,7 +203,7 @@ fn void? Opter.err_unexpected_arg(&o) {
 	msg.init(allocator: o.alloc);
 	msg.appendf("Found unexpected argument \"%s\"", arg);
 	o.err_msg = msg.str_view();
-	return OPTER_ERROR?;
+	return OPTER_ERROR~;
 }
 
 // Currently used by users. But in future, Opter may handle parsing internally.
@@ -213,7 +213,7 @@ fn void? Opter.create_err_parse_value(&o, fault err) {
 	msg.init(allocator: o.alloc);
 	msg.appendf("Error parsing argument \"%s\": %s", arg, err);
 	o.err_msg = msg.str_view();
-	return OPTER_ERROR?;
+	return OPTER_ERROR~;
 }
 
 struct Arg {
@@ -254,7 +254,7 @@ fn Path? Value.as_path(value, Allocator alloc = allocator::heap(), PathEnv path_
 	Path? path = path::new(alloc, (String)value, path_env);
 	if (catch err = path) {
 		io::fprintfn(io::stdout(), "Error parsing argument \"%s\": %s", value, err);
-		return OPTER_ERROR?;
+		return OPTER_ERROR~;
 	}
 	return path;
 }
@@ -266,7 +266,7 @@ macro Value.as_int(value, $Type, int base = 10) {
 	// `Error: It is not possible to cast from 'uint?' to 'uint'.` when called with uint
 	if (catch err = s.to_integer($Type, base)) {
 		io::fprintfn(io::stdout(), "Error parsing argument \"%s\": %s", value, err);
-		return OPTER_ERROR?;
+		return OPTER_ERROR~;
 	}
 	return s.to_integer($Type, base)!!;
 }
@@ -274,7 +274,7 @@ macro Value.as_int(value, $Type, int base = 10) {
 
 // Tests
 
-fn void assert_arg(Arg found, Arg expected) @private {
+fn void assert_arg(Arg found, Arg expected) {
 	assert(found.type == expected.type, "Found %s, expected %s", found.type, expected.type);
 	switch (found.type) {
 		case SHORT:

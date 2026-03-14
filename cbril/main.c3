@@ -61,7 +61,7 @@ macro void? write_json(program_out) {
 	String? out_json = json::to_json(program_out, tmem);
 	if (catch err = out_json) {
 		io::eprintfn("Error serializing program: %s", err);
-		return err?;
+		return err~;
 	}
 	io::printn(out_json);
 }

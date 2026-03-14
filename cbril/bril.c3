@@ -66,7 +66,7 @@ fn void? Value.parse_json(&self, Allocator alloc, Lexer* lex) {
 			self.type = INT;
 			self.integer = ((String)lex.token_slice).to_int()!!;
 		default:
-			return deserialize::PARSE_ERROR?;
+			return deserialize::PARSE_ERROR~;
 	}
 }
 
