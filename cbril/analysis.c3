@@ -106,8 +106,8 @@ fn ProgramBasicBlocks bril2basic_blocks(
 	return { .functions = fbb.to_array(alloc) };
 }
 
-alias ControlFlowGraph = HashMap{String,String[]};
-alias ControlFlowGraph = HashMap{String,ControlFlowGraph};
+alias CfgPart = HashMap{String,String[]};
+alias ControlFlowGraph = HashMap{String,CfgPart};
 
 fn ControlFlowGraph basic_blocks2control_flow_graph(
 	Allocator alloc,
@@ -116,7 +116,7 @@ fn ControlFlowGraph basic_blocks2control_flow_graph(
 	ControlFlowGraph pcfg;
 	pcfg.init(alloc);
 	foreach (bb : pbb.functions) {
-		ControlFlowGraph cfg;
+		CfgPart cfg;
 		cfg.init(alloc);
 		Block[] blks = bb.blocks;
 		foreach (blk_idx, blk : blks) {
