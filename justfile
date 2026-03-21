@@ -1,5 +1,5 @@
 @run-file bril-file *args="":
-    cat {{bril-file}} | bril2json | target/obril {{args}}
+    cat {{bril-file}} | bril2json | target/cbril {{args}}
 
 # use zbril or obril
 @graphviz bril-file:
