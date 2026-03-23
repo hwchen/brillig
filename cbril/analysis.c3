@@ -135,7 +135,7 @@ fn ControlFlowGraph basic_blocks2control_flow_graph(
 					// is not the last block
 					String lbl = bb.blk_to_lbl[blk_idx + 1] ??
 						string::tformat(BLOCK_INDEX_LABEL_FORMAT, blk_idx + 1);
-					String[] out = allocator::new_array(alloc, String, 1);
+					String[] out = alloc::new_array(alloc, String, 1);
 					out[0] = lbl;
 					succs = out;
 				} else {
