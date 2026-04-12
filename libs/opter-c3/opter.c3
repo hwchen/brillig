@@ -29,7 +29,7 @@ import std::collections::list;
 import std::core::string;
 import std::io;
 
-typedef Value = String;
+alias Value = String;
 
 struct Opter {
 	String[] args;
@@ -139,7 +139,7 @@ fn Value? Opter.value(&o) {
 	return (Value)res;
 }
 
-fn Value[]? Opter.values(&o, Allocator alloc = allocator::heap()) {
+fn Value[]? Opter.values(&o, Allocator alloc = mem) {
 	@pool() {
 		List{Value} values;
 		values.tinit();
@@ -235,13 +235,13 @@ enum ArgType {
 macro bool Arg.is(&arg, ArgType $type, ...) {
 	$switch ($type):
 		$case SHORT:
-			$assert($vacount == 1);
-			return arg.type == SHORT && $vaexpr[0] == arg.short_name;
+			$assert($vaarg.len == 1);
+			return arg.type == SHORT && $vaarg[0] == arg.short_name;
 		$case LONG:
-			$assert($vacount == 1);
-			return arg.type == LONG && $vaexpr[0] == arg.long_name;
+			$assert($vaarg.len == 1);
+			return arg.type == LONG && $vaarg[0] == arg.long_name;
 		$case VALUE:
-			$assert($vacount == 0);
+			$assert($vaarg.len == 0);
 			return arg.type == VALUE;
 	$endswitch
 }
@@ -250,7 +250,7 @@ fn String Value.as_str(value) {
 	return (String)value;
 }
 
-fn Path? Value.as_path(value, Allocator alloc = allocator::heap(), PathEnv path_env = path::DEFAULT_ENV) {
+fn Path? Value.as_path(value, Allocator alloc = mem, PathEnv path_env = path::DEFAULT_ENV) {
 	Path? path = path::new(alloc, (String)value, path_env);
 	if (catch err = path) {
 		io::fprintfn(io::stdout(), "Error parsing argument \"%s\": %s", value, err);
@@ -264,11 +264,11 @@ macro Value.as_int(value, $Type, int base = 10) {
 	// calling to_integer twice is weird, working around some weirdness
 	// where $Type! n = s.to_integer($Type, base); gives
 	// `Error: It is not possible to cast from 'uint?' to 'uint'.` when called with uint
-	if (catch err = s.to_integer($Type, base)) {
+	if (catch err = to_integer{$Type}(s, base)) {
 		io::fprintfn(io::stdout(), "Error parsing argument \"%s\": %s", value, err);
 		return OPTER_ERROR~;
 	}
-	return s.to_integer($Type, base)!!;
+	return to_integer{$Type}(s, base)!!;
 }
 
 
@@ -298,7 +298,7 @@ fn void test_short_no_value() @test {
 fn void test_short_no_value_calls_value() @test {
 	String[] input = { "test", "-n" };
 	Opter opter;
-	opter.init(input, allocator::temp());
+	opter.init(input, tmem);
 	assert_arg(opter.next()!!, (Arg) { .type = SHORT, .short_name = 'n' });
 	assert(!@ok(opter.value()));
 }
@@ -341,7 +341,7 @@ fn void test_long_no_value() @test {
 fn void test_long_no_value_calls_value() @test {
 	String[] input = { "test", "--foo" };
 	Opter opter;
-	opter.init(input, allocator::temp());
+	opter.init(input, tmem);
 	assert_arg(opter.next()!!, (Arg) { .type = LONG, .long_name = "foo" });
 	assert(!@ok(opter.value()));
 }
@@ -404,7 +404,7 @@ fn void test_values_basic() @test {
 	Opter opter;
 	opter.init(input);
 	@pool() {
-		assert(opter.values(allocator::temp())!! == { "foo", "bar" });
+		assert(opter.values(tmem)!! == { "foo", "bar" });
 	};
 	assert_arg(opter.next()!!, { .type = EOF });
 }
@@ -413,7 +413,7 @@ fn void test_values_then_short() @test {
 	String[] input = { "test", "foo", "bar", "-a" };
 	Opter opter;
 	opter.init(input);
-	assert(opter.values(allocator::temp())!! == { "foo", "bar" });
+	assert(opter.values(tmem)!! == { "foo", "bar" });
 	assert_arg(opter.next()!!, (Arg) { .type = SHORT, .short_name = 'a' });
 	assert_arg(opter.next()!!, { .type = EOF });
 }
@@ -422,7 +422,7 @@ fn void test_values_then_long() @test {
 	String[] input = { "test", "foo", "bar", "--baz" };
 	Opter opter;
 	opter.init(input);
-	assert(opter.values(allocator::temp())!! == { "foo", "bar" });
+	assert(opter.values(tmem)!! == { "foo", "bar" });
 	assert_arg(opter.next()!!, (Arg) { .type = LONG, .long_name = "baz" });
 	assert_arg(opter.next()!!, { .type = EOF });
 }
@@ -432,7 +432,7 @@ fn void test_short_values() @test {
 	Opter opter;
 	opter.init(input);
 	assert_arg(opter.next()!!, (Arg) { .type = SHORT, .short_name = 'f' });
-	assert(opter.values(allocator::temp())!! == { "bar", "baz" });
+	assert(opter.values(tmem)!! == { "bar", "baz" });
 	assert_arg(opter.next()!!, { .type = EOF });
 }
 
@@ -441,7 +441,7 @@ fn void test_long_values() @test {
 	Opter opter;
 	opter.init(input);
 	assert_arg(opter.next()!!, (Arg) { .type = LONG, .long_name = "foo" });
-	assert(opter.values(allocator::temp())!! == { "bar", "baz" });
+	assert(opter.values(tmem)!! == { "bar", "baz" });
 	assert_arg(opter.next()!!, { .type = EOF });
 }
 
@@ -451,7 +451,7 @@ fn void test_values_starting_condition() @test {
 	Opter opter;
 	opter.init(input);
 	assert_arg(opter.next()!!, (Arg) { .type = SHORT, .short_name = 'f' });
-	assert(opter.values(allocator::temp())!! == { "bar" });
+	assert(opter.values(tmem)!! == { "bar" });
 }
 
 fn void test_positional_end_mark() @test {
@@ -490,7 +490,7 @@ fn void test_values_end_mark() @test {
 	String[] input = { "test", "foo", "--", "bar" };
 	Opter opter;
 	opter.init(input);
-	assert(opter.values(allocator::temp())!! == { "foo" });
+	assert(opter.values(tmem)!! == { "foo" });
 	assert_arg(opter.next()!!, { .type = EOF });
 }
 
@@ -518,6 +518,6 @@ fn void test_value_as_path() @test {
 	Opter opter;
 	opter.init(input);
 	assert_arg(opter.next()!!, (Arg) { .type = LONG, .long_name = "path" });
-	Path my_path = opter.value()!!.as_path(allocator::temp())!!;
+	Path my_path = opter.value()!!.as_path(tmem)!!;
 	assert(my_path.str_view() == "my-path");
 }

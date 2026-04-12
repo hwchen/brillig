@@ -80,17 +80,17 @@ fn void? Value.to_json(&self, DString* dest) {
 }
 
 enum Type : char (String json_repr){
-	BOOL = "bool",
-	INT = "int",
+	BOOL {"bool"},
+	INT {"int"},
 }
 
 enum Op : char (String json_repr) {
-	ADD = "add", MUL = "mul", SUB = "sub", DIV = "div",
-	EQ = "eq", LT = "lt", GT = "gt", LE = "le", GE = "ge",
-	NOT = "not", AND = "and", OR = "or",
-	JMP = "jmp", BR = "br", CALL = "call", RET = "ret",
-	CONST = "const", PRINT = "print",
-	NOP = "nop",
+	ADD {"add"}, MUL {"mul"}, SUB {"sub"}, DIV {"div"},
+	EQ {"eq"}, LT {"lt"}, GT {"gt"}, LE {"le"}, GE {"ge"},
+	NOT {"not"}, AND {"and"}, OR {"or"},
+	JMP {"jmp"}, BR {"br"}, CALL {"call"}, RET {"ret"},
+	CONST {"const"}, PRINT {"print"},
+	NOP {"nop"},
 }
 
 fn bool Op.is_terminal(op) {
