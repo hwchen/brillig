@@ -34,10 +34,10 @@ alias Value = String;
 struct Opter {
 	String[] args;
 	// index into args
-	ulong idx_args;
+	sz idx_args;
 	// index into the current arg
 	// for multiple chars and non-space separator
-	ulong idx_arg;
+	sz idx_arg;
 	// Allocator for error messages
 	Allocator alloc;
 	String err_msg;
@@ -251,7 +251,7 @@ fn String Value.as_str(value) {
 }
 
 fn Path? Value.as_path(value, Allocator alloc = mem, PathEnv path_env = path::DEFAULT_ENV) {
-	Path? path = path::new(alloc, (String)value, path_env);
+	Path? path = path::new(alloc, (String)value);
 	if (catch err = path) {
 		io::fprintfn(io::stdout(), "Error parsing argument \"%s\": %s", value, err);
 		return OPTER_ERROR~;
@@ -519,5 +519,5 @@ fn void test_value_as_path() @test {
 	opter.init(input);
 	assert_arg(opter.next()!!, (Arg) { .type = LONG, .long_name = "path" });
 	Path my_path = opter.value()!!.as_path(tmem)!!;
-	assert(my_path.str_view() == "my-path");
+	assert(my_path == "my-path");
 }
