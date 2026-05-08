@@ -10,8 +10,8 @@ alias Block = Instruction[];
 struct BasicBlocks {
 	Block[] blocks;
 	// if there's no label, then the implied label is the index in blocks
-	HashMap{usz,String} blk_to_lbl;
-	HashMap{String,usz} lbl_to_blk; 
+	HashMap{sz,String} blk_to_lbl;
+	HashMap{String,sz} lbl_to_blk; 
 
 	// Carried over from Function so we don't lose info when converting back.
 	String name;
@@ -60,9 +60,9 @@ fn ProgramBasicBlocks bril2basic_blocks(
 	foreach (func : program.functions) {
 		List{Block} blocks;
 		blocks.tinit();
-		HashMap{usz,String} blk_to_lbl;
+		HashMap{sz,String} blk_to_lbl;
 		blk_to_lbl.init(alloc);
-		HashMap{String,usz} lbl_to_blk;
+		HashMap{String,sz} lbl_to_blk;
 		lbl_to_blk.init(alloc);
 		List {Instruction} block;
 		block.tinit();
@@ -171,7 +171,7 @@ fn void dead_code_elimination_globally_unused(ProgramBasicBlocks* pbb) {
 			// Second loop over instrs, if instr destination not in `used`,
 			// delete instr
 			foreach (&instrs : bb.blocks) {
-				usz i = instrs.len;
+				sz i = instrs.len;
 				while (i > 0) {
 					i -= 1;
 					if (try dest = (*instrs)[i].dest.get()) {
@@ -191,7 +191,7 @@ fn void dead_code_elimination_locally_killed(ProgramBasicBlocks* pbb) {
 		foreach (&instrs : bb.blocks) @pool() {
 			HashMap{String, char} declared;
 			declared.tinit();
-			usz i = instrs.len;
+			sz i = instrs.len;
 			while (i > 0) {
 				i -= 1;
 				Instruction instr = (*instrs)[i];

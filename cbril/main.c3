@@ -18,9 +18,9 @@ fn int main(String[] args) {
 	rdr.init(io::stdin(), &rdr_buf);
 
 	char[4096 * 8] buf;
-	ulong bytes_read;
+	sz bytes_read;
 	while (bytes_read < buf.len) {
-		ulong? n_bytes = rdr.read(buf[bytes_read..]);
+		sz? n_bytes = rdr.read(buf[bytes_read..]);
 		if (catch err = n_bytes) {
 			if (err == io::EOF) break;
 			io::eprintfn("Error reading file");
