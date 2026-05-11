@@ -1,9 +1,9 @@
 @run-file bril-file *args="":
-    cat {{bril-file}} | bril2json | target/cbril {{args}}
+    cat {{bril-file}} | bril2json | build/cbril {{args}}
 
 # use zbril or obril
 @graphviz bril-file:
-    just run-file target/obril {{bril-file}} --graphviz | dot -Tpdf -o scratch/cfg.pdf && evince scratch/cfg.pdf
+    just run-file build/obril {{bril-file}} --graphviz | dot -Tpdf -o scratch/cfg.pdf && evince scratch/cfg.pdf
 
 # round trip to test conversion of bril.Program to basic blocks and back.
 # jq sorts keys with `-S`

@@ -1,11 +1,7 @@
-.envrc
-.direnv
-.venv
+*.bin
+target/
+build/
 
-scratch
-.zig-cache
-zig-out
+scratch/
 *.pdf
 
-*.bin
-target
